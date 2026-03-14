@@ -1,0 +1,163 @@
+/**
+ * Gera uma grade de caça-palavras
+ * @param {Array} words - Lista de palavras
+ * @param {number} gridSize - Tamanho da grade
+ * @param {boolean} allowHorizontal - Permitir palavras na horizontal
+ * @param {boolean} allowVertical - Permitir palavras na vertical
+ * @param {boolean} uppercase - Usar letras maiúsculas
+ * @returns {Object} Grade e posições das palavras
+ */
+export const generateWordSearch = (
+  words, 
+  gridSize = 15, 
+  allowHorizontal = true, 
+  allowVertical = true,
+  uppercase = true
+) => {
+
+/* | Inicializa a Grade |
+   | Armazena as posições das palavras |
+   | Ordena Decrescente |
+*/
+  let grid = Array(gridSize).fill().map(() => Array(gridSize).fill(''));
+  const wordPositions = [];
+  const sortedWords = [...words].sort((a, b) => b.word.length - a.word.length);
+  
+  for (const wordObj of sortedWords) {
+    const word = uppercase ? wordObj.word.toUpperCase() : wordObj.word;
+    let placed = false;
+    let attempts = 0;
+    const maxAttempts = 1000;
+    
+    while (!placed && attempts < maxAttempts) {
+      const directions = [];
+      if (allowHorizontal) directions.push('horizontal');
+      if (allowVertical) directions.push('vertical');
+      
+      if (directions.length === 0) {
+        throw new Error('Pelo menos uma direção deve ser permitida');
+      }
+      
+      const direction = directions[Math.floor(Math.random() * directions.length)];
+      const row = Math.floor(Math.random() * gridSize);
+      const col = Math.floor(Math.random() * gridSize);
+      
+      if (canPlaceWord(grid, word, row, col, direction)) {
+        placeWord(grid, word, row, col, direction);
+        
+        wordPositions.push({
+          word: wordObj.word,
+          originalWord: wordObj.word,
+          row,
+          col,
+          direction,
+          length: word.length
+        });
+        
+        placed = true;
+      }
+      
+      attempts++;
+    }
+    
+    if (!placed) {
+      console.warn(`Não foi possível colocar a palavra: ${word}`);
+    }
+  }
+  
+  fillEmptySpaces(grid, uppercase);
+  
+  return { grid, wordPositions };
+};
+
+const canPlaceWord = (grid, word, startRow, startCol, direction) => {
+  const size = grid.length;
+
+  if (direction === 'horizontal') {
+    if (startCol + word.length > size) return false;
+    
+    for (let i = 0; i < word.length; i++) {
+      const cell = grid[startRow][startCol + i];
+      if (cell !== '' && cell !== word[i]) return false;
+    }
+  } else if (direction === 'vertical') {
+    if (startRow + word.length > size) return false;
+    
+    for (let i = 0; i < word.length; i++) {
+      const cell = grid[startRow + i][startCol];
+      if (cell !== '' && cell !== word[i]) return false;
+    }
+  }
+  
+  return true;
+};
+
+const placeWord = (grid, word, startRow, startCol, direction) => {
+  if (direction === 'horizontal') {
+    for (let i = 0; i < word.length; i++) {
+      grid[startRow][startCol + i] = word[i];
+    }
+  } else if (direction === 'vertical') {
+    for (let i = 0; i < word.length; i++) {
+      grid[startRow + i][startCol] = word[i];
+    }
+  }
+};
+
+const fillEmptySpaces = (grid, uppercase) => {
+  const letters = uppercase 
+    ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    : 'abcdefghijklmnopqrstuvwxyz';
+  
+  for (let i = 0; i < grid.length; i++) {
+    for (let j = 0; j < grid[i].length; j++) {
+      if (grid[i][j] === '') {
+        grid[i][j] = letters[Math.floor(Math.random() * letters.length)];
+      }
+    }
+  }
+};
+
+export const formatGrid = (grid) => {
+  return grid.map(row => row.join(' ')).join('\n');
+};
+
+export const findWordsInGrid = (grid, words, allowHorizontal, allowVertical) => {
+  const foundWords = [];
+  const size = grid.length;
+  
+  for (const wordObj of words) {
+    const word = wordObj.word;
+    const reversed = word.split('').reverse().join('');
+    let found = false;
+
+    if (allowHorizontal) {
+      for (let row = 0; row < size; row++) {
+        const rowString = grid[row].join('');
+        if (rowString.includes(word) || rowString.includes(reversed)) {
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (allowVertical && !found) {
+      for (let col = 0; col < size; col++) {
+        let colString = '';
+        for (let row = 0; row < size; row++) {
+          colString += grid[row][col];
+        }
+        if (colString.includes(word) || colString.includes(reversed)) {
+          found = true;
+          break;
+        }
+      }
+    }
+    
+    if (found) {
+      foundWords.push(wordObj);
+    }
+  }
+  
+  return foundWords;
+};
