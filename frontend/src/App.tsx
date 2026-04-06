@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import Activities from "./pages/Activities";
-import CreateActivity from "./pages/CreateActivity";
+import Home from "./pages/Home";
+import Register from "./pages/Register";
+import Sidebar from "./components/Sidebar";
 import { getAuth } from "./auth";
 import { setAuthToken } from "./api";
 
 export default function App() {
-  const [page, setPage] = useState("login");
+  const [page, setPage] = useState("home");
   const [logged, setLogged] = useState(false);
 
   useEffect(() => {
@@ -19,25 +20,30 @@ export default function App() {
     }
   }, []);
 
-  if (!logged) {
-    return (
-      <div>
-        <button onClick={() => setPage("login")}>Login</button>
-        <button onClick={() => setPage("register")}>Register</button>
+  const logout = () => {
+    localStorage.removeItem("auth");
+    setLogged(false);
+    setPage("home");
+  };
 
-        {page === "login" && <Login onLogin={() => setLogged(true)} />}
-        {page === "register" && <Register />}
-      </div>
-    );
+  if (page === "home") {
+    return <Home onStart={() => setPage("login")} />;
   }
 
-  return (
-    <div>
-      <button onClick={() => setPage("activities")}>Atividades</button>
-      <button onClick={() => setPage("create")}>Criar</button>
+if (!logged) {
+  if (page === "login")
+    return <Login onLogin={() => setLogged(true)} goRegister={() => setPage("register")} />;
 
-      {page === "activities" && <Activities />}
-      {page === "create" && <CreateActivity />}
+  if (page === "register")
+    return <Register goLogin={() => setPage("login")} />;
+}
+
+  return (
+    <div className="flex">
+      <Sidebar setPage={setPage} logout={logout} />
+      <div className="flex-1">
+        {page === "activities" && <Activities />}
+      </div>
     </div>
   );
 }

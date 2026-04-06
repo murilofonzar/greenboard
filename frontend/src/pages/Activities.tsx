@@ -9,15 +9,12 @@ export default function Activities() {
   }, []);
 
   return (
-    <div>
-      <h2>Atividades</h2>
+    <div className="p-6 chalk">
+      <h1 className="text-3xl mb-4">Atividades</h1>
       {activities.map((a) => (
-        <div key={a.id}>
-          <h3>{a.title}</h3>
+        <div key={a.id} className="mb-4">
+          <h2 className="text-xl">{a.title}</h2>
           <p>{a.description}</p>
-          {a.questions.map((q: any) => (
-            <div key={q.id}>{q.statement}</div>
-          ))}
         </div>
       ))}
     </div>

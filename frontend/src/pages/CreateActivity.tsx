@@ -1,51 +1,24 @@
 import { useState } from "react";
 import { api } from "../api";
 import { getAuth } from "../auth";
+import Button from "../components/Button";
 
 export default function CreateActivity() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [questions, setQuestions] = useState<any[]>([]);
-
-  const addQuestion = () => {
-    setQuestions([
-      ...questions,
-      { statement: "", options: ["", "", "", ""], answer: 0 },
-    ]);
-  };
 
   const save = async () => {
     const user = getAuth().user;
-    await api.post("/activities", {
-      title,
-      description,
-      professorId: user.id,
-      questions,
-    });
+    await api.post("/activities", { title, description, professorId: user.id, questions: [] });
     alert("Criado!");
   };
 
   return (
-    <div>
-      <h2>Criar Atividade</h2>
-      <input placeholder="Título" onChange={(e) => setTitle(e.target.value)} />
-      <input placeholder="Descrição" onChange={(e) => setDescription(e.target.value)} />
-
-      <button onClick={addQuestion}>Adicionar Pergunta</button>
-
-      {questions.map((q, i) => (
-        <div key={i}>
-          <input
-            placeholder="Pergunta"
-            onChange={(e) => {
-              q.statement = e.target.value;
-              setQuestions([...questions]);
-            }}
-          />
-        </div>
-      ))}
-
-      <button onClick={save}>Salvar</button>
+    <div className="p-6">
+      <h1 className="text-2xl mb-4">Criar Atividade</h1>
+      <input className="block mb-2 p-2 border rounded w-full" placeholder="Título" onChange={(e) => setTitle(e.target.value)} />
+      <input className="block mb-4 p-2 border rounded w-full" placeholder="Descrição" onChange={(e) => setDescription(e.target.value)} />
+      <Button onClick={save}>Salvar</Button>
     </div>
   );
 }
