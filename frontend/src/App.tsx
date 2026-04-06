@@ -1,35 +1,49 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import Login from "./pages/Login";
+import Activities from "./pages/Activities";
+import Home from "./pages/Home";
+import Register from "./pages/Register";
+import Sidebar from "./components/Sidebar";
+import { getAuth } from "./auth";
+import { setAuthToken } from "./api";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [page, setPage] = useState("home");
+  const [logged, setLogged] = useState(false);
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  useEffect(() => {
+    const auth = getAuth();
+    if (auth) {
+      setAuthToken(auth.access_token);
+      setLogged(true);
+      setPage("activities");
+    }
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("auth");
+    setLogged(false);
+    setPage("home");
+  };
+
+  if (page === "home") {
+    return <Home onStart={() => setPage("login")} />;
+  }
+
+if (!logged) {
+  if (page === "login")
+    return <Login onLogin={() => setLogged(true)} goRegister={() => setPage("register")} />;
+
+  if (page === "register")
+    return <Register goLogin={() => setPage("login")} />;
 }
 
-export default App
+  return (
+    <div className="flex">
+      <Sidebar setPage={setPage} logout={logout} />
+      <div className="flex-1">
+        {page === "activities" && <Activities />}
+      </div>
+    </div>
+  );
+}
