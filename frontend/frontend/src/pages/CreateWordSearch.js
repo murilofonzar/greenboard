@@ -1,3 +1,5 @@
+import './CreateWordSearch.css';
+
 return (
     <div className="create-wordsearch-container">
       <h1>Criar Caça-palavras</h1>    
