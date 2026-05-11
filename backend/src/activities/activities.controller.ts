@@ -1,9 +1,10 @@
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  Request,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
 } from '@nestjs/common';
 
 import { ActivitiesService } from './activities.service';
@@ -18,7 +19,30 @@ export class ActivitiesController {
   }
 
   @Get()
-  findAll(@Request() req: any) {
+  findAll(@Req() req: any) {
     return this.service.findAll(req.user);
+  }
+
+  @Post(':id/submit')
+  submit(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() body: any,
+  ) {
+    return this.service.submit(
+      id,
+      req.user.id,
+      body.answers,
+    );
+  }
+
+  @Get('results/student')
+  studentResults(@Req() req: any) {
+    return this.service.getStudentResults(req.user.id);
+  }
+
+  @Get('results/professor')
+  professorResults(@Req() req: any) {
+    return this.service.getProfessorResults(req.user.id);
   }
 }

@@ -6,59 +6,52 @@ export default function Sidebar({ setPage, logout }: any) {
   const isProfessor = auth?.user?.role === "PROFESSOR";
 
   return (
-    <div className="w-64 h-screen bg-gradient-to-b from-green-950 to-green-900 text-white p-6 flex flex-col justify-between shadow-2xl">
-
+    <div className="w-64 min-h-screen bg-green-950 text-white p-6 flex flex-col justify-between shadow-2xl">
       <div>
         <h1 className="text-3xl chalk mb-10">
           Greenboard
         </h1>
 
         <div className="space-y-3">
-
           <button
             onClick={() => setPage("activities")}
-            className="
-              w-full
-              text-left
-              px-4
-              py-3
-              rounded-xl
-              hover:bg-white/10
-              transition
-            "
+            className="w-full text-left hover:bg-green-800 p-3 rounded-xl transition"
           >
             Atividades
           </button>
 
-          {isProfessor && (
+          {!isProfessor && (
             <button
-              onClick={() => setPage("create")}
-              className="
-                w-full
-                text-left
-                px-4
-                py-3
-                rounded-xl
-                hover:bg-white/10
-                transition
-              "
+              onClick={() => setPage("results")}
+              className="w-full text-left hover:bg-green-800 p-3 rounded-xl transition"
             >
-              Criar atividade
+              Resultados
             </button>
           )}
 
+          {isProfessor && (
+            <>
+              <button
+                onClick={() => setPage("create")}
+                className="w-full text-left hover:bg-green-800 p-3 rounded-xl transition"
+              >
+                Criar Atividade
+              </button>
+
+              <button
+                onClick={() => setPage("submissions")}
+                className="w-full text-left hover:bg-green-800 p-3 rounded-xl transition"
+              >
+                Respostas
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       <button
         onClick={logout}
-        className="
-          bg-red-500/20
-          hover:bg-red-500/40
-          rounded-xl
-          py-3
-          transition
-        "
+        className="text-red-400 hover:text-red-300"
       >
         Sair
       </button>

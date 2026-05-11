@@ -86,18 +86,14 @@ const user = await this.prisma.user.create({
 
 private sign(user: any) {
   return {
-    access_token: this.jwt.sign({
-      sub: user.id,
+access_token: this.jwt.sign({
+  sub: user.id,
+  role: user.role,
 
-      role: user.role,
-
-      educationLevel: user.educationLevel,
-      gradeGroup: user.gradeGroup,
-
-      grade: user.grade,
-      highSchoolYear:
-        user.highSchoolYear,
-    }),
+  educationLevel: user.educationLevel,
+  grade: user.grade,
+  highSchoolYear: user.highSchoolYear,
+}),
 
     user: {
       id: user.id,

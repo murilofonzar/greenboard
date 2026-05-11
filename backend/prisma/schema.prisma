@@ -67,15 +67,15 @@ model Activity {
   description      String
 
   educationLevel   EducationLevel
-  gradeGroup       GradeGroup
-
-  grade            Grade?
-  highSchoolYear   HighSchoolGrade?
+  gradeGroup       GradeGroup?
+  grade             Grade?
+  highSchoolYear    HighSchoolGrade?
 
   professorId      String
   professor        User @relation(fields: [professorId], references: [id])
 
   questions        Question[]
+  submissions      Submission[]
 
   createdAt        DateTime @default(now())
 }
@@ -94,12 +94,15 @@ model Submission {
   id          String   @id @default(uuid())
 
   studentId   String
-  student     User @relation(fields: [studentId], references: [id])
+  student     User     @relation(fields: [studentId], references: [id])
 
   activityId  String
+  activity    Activity @relation(fields: [activityId], references: [id])
 
   answers     Int[]
   score       Int
 
   createdAt   DateTime @default(now())
+
+  @@unique([studentId, activityId])
 }

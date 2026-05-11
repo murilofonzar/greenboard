@@ -26,6 +26,15 @@ let ActivitiesController = class ActivitiesController {
     findAll(req) {
         return this.service.findAll(req.user);
     }
+    submit(id, req, body) {
+        return this.service.submit(id, req.user.id, body.answers);
+    }
+    studentResults(req) {
+        return this.service.getStudentResults(req.user.id);
+    }
+    professorResults(req) {
+        return this.service.getProfessorResults(req.user.id);
+    }
 };
 exports.ActivitiesController = ActivitiesController;
 __decorate([
@@ -37,11 +46,34 @@ __decorate([
 ], ActivitiesController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Request)()),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ActivitiesController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Post)(':id/submit'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", void 0)
+], ActivitiesController.prototype, "submit", null);
+__decorate([
+    (0, common_1.Get)('results/student'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ActivitiesController.prototype, "studentResults", null);
+__decorate([
+    (0, common_1.Get)('results/professor'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ActivitiesController.prototype, "professorResults", null);
 exports.ActivitiesController = ActivitiesController = __decorate([
     (0, common_1.Controller)('activities'),
     __metadata("design:paramtypes", [activities_service_1.ActivitiesService])

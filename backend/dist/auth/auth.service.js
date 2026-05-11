@@ -94,7 +94,6 @@ let AuthService = class AuthService {
                 sub: user.id,
                 role: user.role,
                 educationLevel: user.educationLevel,
-                gradeGroup: user.gradeGroup,
                 grade: user.grade,
                 highSchoolYear: user.highSchoolYear,
             }),
