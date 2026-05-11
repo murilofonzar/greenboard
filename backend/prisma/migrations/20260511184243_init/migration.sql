@@ -1,6 +1,18 @@
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('PROFESSOR', 'ALUNO');
 
+-- CreateEnum
+CREATE TYPE "EducationLevel" AS ENUM ('ENSINO_FUNDAMENTAL', 'ENSINO_MEDIO');
+
+-- CreateEnum
+CREATE TYPE "GradeGroup" AS ENUM ('ANOS_INICIAIS', 'ANOS_FINAIS', 'ENSINO_MEDIO');
+
+-- CreateEnum
+CREATE TYPE "Grade" AS ENUM ('PRIMEIRO_ANO', 'SEGUNDO_ANO', 'TERCEIRO_ANO', 'QUARTO_ANO', 'QUINTO_ANO', 'SEXTO_ANO', 'SETIMO_ANO', 'OITAVO_ANO', 'NONO_ANO');
+
+-- CreateEnum
+CREATE TYPE "HighSchoolGrade" AS ENUM ('PRIMEIRO', 'SEGUNDO', 'TERCEIRO');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -8,6 +20,11 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "role" "Role" NOT NULL,
+    "birthDate" TIMESTAMP(3) NOT NULL,
+    "educationLevel" "EducationLevel",
+    "gradeGroup" "GradeGroup",
+    "grade" "Grade",
+    "highSchoolYear" "HighSchoolGrade",
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
@@ -18,6 +35,10 @@ CREATE TABLE "Activity" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
+    "educationLevel" "EducationLevel" NOT NULL,
+    "gradeGroup" "GradeGroup" NOT NULL,
+    "grade" "Grade",
+    "highSchoolYear" "HighSchoolGrade",
     "professorId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

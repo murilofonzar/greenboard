@@ -23,8 +23,8 @@ let ActivitiesController = class ActivitiesController {
     create(dto) {
         return this.service.create(dto);
     }
-    findAll() {
-        return this.service.findAll();
+    findAll(req) {
+        return this.service.findAll(req.user);
     }
 };
 exports.ActivitiesController = ActivitiesController;
@@ -37,8 +37,9 @@ __decorate([
 ], ActivitiesController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ActivitiesController.prototype, "findAll", null);
 exports.ActivitiesController = ActivitiesController = __decorate([

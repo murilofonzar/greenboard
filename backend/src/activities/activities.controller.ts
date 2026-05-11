@@ -1,4 +1,11 @@
-import { Controller, Post, Get, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Request,
+} from '@nestjs/common';
+
 import { ActivitiesService } from './activities.service';
 
 @Controller('activities')
@@ -11,7 +18,7 @@ export class ActivitiesController {
   }
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@Request() req: any) {
+    return this.service.findAll(req.user);
   }
 }

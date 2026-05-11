@@ -7,26 +7,77 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role
-  createdAt DateTime @default(now())
+enum Role {
+  PROFESSOR
+  ALUNO
+}
 
-  activities  Activity[]
-  submissions Submission[]
+enum EducationLevel {
+  ENSINO_FUNDAMENTAL
+  ENSINO_MEDIO
+}
+
+enum GradeGroup {
+  ANOS_INICIAIS
+  ANOS_FINAIS
+  ENSINO_MEDIO
+}
+
+enum Grade {
+  PRIMEIRO_ANO
+  SEGUNDO_ANO
+  TERCEIRO_ANO
+  QUARTO_ANO
+  QUINTO_ANO
+  SEXTO_ANO
+  SETIMO_ANO
+  OITAVO_ANO
+  NONO_ANO
+}
+
+enum HighSchoolGrade {
+  PRIMEIRO
+  SEGUNDO
+  TERCEIRO
+}
+
+model User {
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  password       String
+  role           Role
+  birthDate      DateTime
+
+  educationLevel EducationLevel?
+  gradeGroup     GradeGroup?
+
+  grade          Grade?
+  highSchoolYear HighSchoolGrade?
+
+  createdAt      DateTime @default(now())
+
+  activities     Activity[]
+  submissions    Submission[]
 }
 
 model Activity {
-  id          String   @id @default(uuid())
-  title       String
-  description String
-  professorId String
-  professor   User     @relation(fields: [professorId], references: [id])
-  questions   Question[]
-  createdAt   DateTime @default(now())
+  id               String   @id @default(uuid())
+  title            String
+  description      String
+
+  educationLevel   EducationLevel
+  gradeGroup       GradeGroup
+
+  grade            Grade?
+  highSchoolYear   HighSchoolGrade?
+
+  professorId      String
+  professor        User @relation(fields: [professorId], references: [id])
+
+  questions        Question[]
+
+  createdAt        DateTime @default(now())
 }
 
 model Question {
@@ -34,21 +85,21 @@ model Question {
   statement   String
   options     String[]
   answer      Int
-  activityId String
-  activity   Activity @relation(fields: [activityId], references: [id])
+
+  activityId  String
+  activity    Activity @relation(fields: [activityId], references: [id])
 }
 
 model Submission {
-  id         String   @id @default(uuid())
-  studentId String
-  student   User     @relation(fields: [studentId], references: [id])
-  activityId String
-  answers   Int[]
-  score     Int
-  createdAt DateTime @default(now())
-}
+  id          String   @id @default(uuid())
 
-enum Role {
-  PROFESSOR
-  ALUNO
+  studentId   String
+  student     User @relation(fields: [studentId], references: [id])
+
+  activityId  String
+
+  answers     Int[]
+  score       Int
+
+  createdAt   DateTime @default(now())
 }

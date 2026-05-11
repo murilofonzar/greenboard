@@ -9,6 +9,10 @@ export declare class AuthController {
             name: any;
             email: any;
             role: any;
+            educationLevel: any;
+            gradeGroup: any;
+            grade: any;
+            highSchoolYear: any;
         };
     }>;
     login(body: {
@@ -21,6 +25,10 @@ export declare class AuthController {
             name: any;
             email: any;
             role: any;
+            educationLevel: any;
+            gradeGroup: any;
+            grade: any;
+            highSchoolYear: any;
         };
     }>;
 }

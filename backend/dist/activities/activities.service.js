@@ -22,16 +22,44 @@ let ActivitiesService = class ActivitiesService {
             data: {
                 title: dto.title,
                 description: dto.description,
+                educationLevel: dto.educationLevel,
+                gradeGroup: dto.gradeGroup,
+                grade: dto.grade,
+                highSchoolYear: dto.highSchoolYear,
                 professorId: dto.professorId,
                 questions: {
-                    create: dto.questions
-                }
-            }
+                    create: dto.questions,
+                },
+            },
+            include: {
+                questions: true,
+            },
         });
     }
-    findAll() {
+    async findAll(user) {
+        if (user.role === 'PROFESSOR') {
+            return this.prisma.activity.findMany({
+                include: {
+                    questions: true,
+                },
+            });
+        }
         return this.prisma.activity.findMany({
-            include: { questions: true }
+            where: {
+                educationLevel: user.educationLevel,
+                gradeGroup: user.gradeGroup,
+                OR: [
+                    {
+                        grade: user.grade,
+                    },
+                    {
+                        highSchoolYear: user.highSchoolYear,
+                    },
+                ],
+            },
+            include: {
+                questions: true,
+            },
         });
     }
 };

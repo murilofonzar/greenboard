@@ -1,5 +1,6 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
+import { EducationLevel, Grade, GradeGroup, HighSchoolGrade } from '@prisma/client';
 export declare class AuthService {
     private prisma;
     private jwt;
@@ -9,6 +10,11 @@ export declare class AuthService {
         email: string;
         password: string;
         role: 'PROFESSOR' | 'ALUNO';
+        birthDate: string;
+        educationLevel?: EducationLevel;
+        gradeGroup?: GradeGroup;
+        grade?: Grade;
+        highSchoolYear?: HighSchoolGrade;
     }): Promise<{
         access_token: string;
         user: {
@@ -16,6 +22,10 @@ export declare class AuthService {
             name: any;
             email: any;
             role: any;
+            educationLevel: any;
+            gradeGroup: any;
+            grade: any;
+            highSchoolYear: any;
         };
     }>;
     login(email: string, password: string): Promise<{
@@ -25,6 +35,10 @@ export declare class AuthService {
             name: any;
             email: any;
             role: any;
+            educationLevel: any;
+            gradeGroup: any;
+            grade: any;
+            highSchoolYear: any;
         };
     }>;
     private sign;

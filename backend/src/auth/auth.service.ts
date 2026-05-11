@@ -1,7 +1,21 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
+
 import { PrismaService } from '../prisma/prisma.service';
+
 import { JwtService } from '@nestjs/jwt';
+
 import * as bcrypt from 'bcrypt';
+
+import {
+  EducationLevel,
+  Grade,
+  GradeGroup,
+  HighSchoolGrade,
+} from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -10,12 +24,21 @@ export class AuthService {
     private jwt: JwtService,
   ) {}
 
-  async register(data: {
-    name: string;
-    email: string;
-    password: string;
-    role: 'PROFESSOR' | 'ALUNO';
-  }) {
+async register(data: {
+  name: string;
+  email: string;
+  password: string;
+
+  role: 'PROFESSOR' | 'ALUNO';
+
+  birthDate: string;
+
+  educationLevel?: EducationLevel;
+  gradeGroup?: GradeGroup;
+
+  grade?: Grade;
+  highSchoolYear?: HighSchoolGrade;
+}) {
     const exists = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -26,14 +49,23 @@ export class AuthService {
 
     const hash = await bcrypt.hash(data.password, 10);
 
-    const user = await this.prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        password: hash,
-        role: data.role,
-      },
-    });
+const user = await this.prisma.user.create({
+  data: {
+    name: data.name,
+    email: data.email,
+    password: hash,
+
+    role: data.role,
+
+    birthDate: new Date(data.birthDate),
+
+    educationLevel: data.educationLevel,
+    gradeGroup: data.gradeGroup,
+
+    grade: data.grade,
+    highSchoolYear: data.highSchoolYear,
+  },
+});
 
     return this.sign(user);
   }
@@ -52,18 +84,39 @@ export class AuthService {
     return this.sign(user);
   }
 
-  private sign(user: any) {
-    return {
-      access_token: this.jwt.sign({
-        sub: user.id,
-        role: user.role,
-      }),
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    };
-  }
+private sign(user: any) {
+  return {
+    access_token: this.jwt.sign({
+      sub: user.id,
+
+      role: user.role,
+
+      educationLevel: user.educationLevel,
+      gradeGroup: user.gradeGroup,
+
+      grade: user.grade,
+      highSchoolYear:
+        user.highSchoolYear,
+    }),
+
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+
+      role: user.role,
+
+      educationLevel:
+        user.educationLevel,
+
+      gradeGroup:
+        user.gradeGroup,
+
+      grade: user.grade,
+
+      highSchoolYear:
+        user.highSchoolYear,
+    },
+  };
+}
 }

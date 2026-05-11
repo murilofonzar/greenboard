@@ -68,6 +68,11 @@ let AuthService = class AuthService {
                 email: data.email,
                 password: hash,
                 role: data.role,
+                birthDate: new Date(data.birthDate),
+                educationLevel: data.educationLevel,
+                gradeGroup: data.gradeGroup,
+                grade: data.grade,
+                highSchoolYear: data.highSchoolYear,
             },
         });
         return this.sign(user);
@@ -88,12 +93,20 @@ let AuthService = class AuthService {
             access_token: this.jwt.sign({
                 sub: user.id,
                 role: user.role,
+                educationLevel: user.educationLevel,
+                gradeGroup: user.gradeGroup,
+                grade: user.grade,
+                highSchoolYear: user.highSchoolYear,
             }),
             user: {
                 id: user.id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                educationLevel: user.educationLevel,
+                gradeGroup: user.gradeGroup,
+                grade: user.grade,
+                highSchoolYear: user.highSchoolYear,
             },
         };
     }
