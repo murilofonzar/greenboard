@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   BadRequestException,
   Injectable,
@@ -45,18 +47,35 @@ export class ActivitiesService {
         include: {
           questions: true,
         },
+
+        orderBy: {
+          createdAt: 'desc',
+        },
       });
     }
 
+    const submissions = await this.prisma.submission.findMany({
+      where: {
+        studentId: user.id,
+      },
+      select: {
+        activityId: true,
+      },
+    });
+
+    const answeredIds = submissions.map((s) => s.activityId);
+
     return this.prisma.activity.findMany({
       where: {
+        status: 'PUBLISHED',
+        id: {
+          notIn: answeredIds,
+        },
+
         educationLevel: user.educationLevel,
 
         OR: [
-          {
-            grade: user.grade,
-          },
-
+          { grade: user.grade },
           {
             highSchoolYear: user.highSchoolYear,
           },
@@ -69,40 +88,30 @@ export class ActivitiesService {
     });
   }
 
-  async submit(
-    activityId: string,
-    studentId: string,
-    answers: number[],
-  ) {
-    const exists =
-      await this.prisma.submission.findFirst({
-        where: {
-          activityId,
-          studentId,
-        },
-      });
+  async submit(activityId: string, studentId: string, answers: number[]) {
+    const exists = await this.prisma.submission.findFirst({
+      where: {
+        activityId,
+        studentId,
+      },
+    });
 
     if (exists) {
-      throw new BadRequestException(
-        'Você já respondeu esta atividade.',
-      );
+      throw new BadRequestException('Você já respondeu esta atividade.');
     }
 
-    const activity =
-      await this.prisma.activity.findUnique({
-        where: {
-          id: activityId,
-        },
+    const activity = await this.prisma.activity.findUnique({
+      where: {
+        id: activityId,
+      },
 
-        include: {
-          questions: true,
-        },
-      });
+      include: {
+        questions: true,
+      },
+    });
 
     if (!activity) {
-      throw new NotFoundException(
-        'Atividade não encontrada',
-      );
+      throw new NotFoundException('Atividade não encontrada');
     }
 
     let score = 0;
@@ -123,6 +132,18 @@ export class ActivitiesService {
     });
   }
 
+  async publishActivity(id: string) {
+    return this.prisma.activity.update({
+      where: {
+        id,
+      },
+
+      data: {
+        status: 'PUBLISHED',
+      },
+    });
+  }
+
   async getStudentResults(studentId: string) {
     return this.prisma.submission.findMany({
       where: {
@@ -139,6 +160,24 @@ export class ActivitiesService {
     });
   }
 
+  async correctSubmission(
+    submissionId: string,
+    score: number,
+    feedback: string,
+  ) {
+    return this.prisma.submission.update({
+      where: {
+        id: submissionId,
+      },
+      data: {
+        score,
+        feedback,
+        status: 'CORRECTED',
+        correctedAt: new Date(),
+      },
+    });
+  }
+
   async getProfessorResults(professorId: string) {
     return this.prisma.submission.findMany({
       where: {
@@ -149,11 +188,29 @@ export class ActivitiesService {
 
       include: {
         student: true,
-        activity: true,
+
+        activity: {
+          include: {
+            questions: true,
+          },
+        },
       },
 
       orderBy: {
         createdAt: 'desc',
+      },
+    });
+  }
+
+  async updateActivity(id: string, dto: any) {
+    return this.prisma.activity.update({
+      where: {
+        id,
+      },
+
+      data: {
+        title: dto.title,
+        description: dto.description,
       },
     });
   }

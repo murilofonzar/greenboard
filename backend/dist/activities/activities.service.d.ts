@@ -19,6 +19,7 @@ export declare class ActivitiesService {
         createdAt: Date;
         title: string;
         description: string;
+        status: import(".prisma/client").$Enums.ActivityStatus;
         professorId: string;
     }>;
     findAll(user: any): Promise<({
@@ -38,15 +39,31 @@ export declare class ActivitiesService {
         createdAt: Date;
         title: string;
         description: string;
+        status: import(".prisma/client").$Enums.ActivityStatus;
         professorId: string;
     })[]>;
     submit(activityId: string, studentId: string, answers: number[]): Promise<{
         id: string;
         createdAt: Date;
-        activityId: string;
+        status: import(".prisma/client").$Enums.SubmissionStatus;
         studentId: string;
+        activityId: string;
         answers: number[];
-        score: number;
+        score: number | null;
+        feedback: string | null;
+        correctedAt: Date | null;
+    }>;
+    publishActivity(id: string): Promise<{
+        id: string;
+        educationLevel: import(".prisma/client").$Enums.EducationLevel;
+        gradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
+        grade: import(".prisma/client").$Enums.Grade | null;
+        highSchoolYear: import(".prisma/client").$Enums.HighSchoolGrade | null;
+        createdAt: Date;
+        title: string;
+        description: string;
+        status: import(".prisma/client").$Enums.ActivityStatus;
+        professorId: string;
     }>;
     getStudentResults(studentId: string): Promise<({
         activity: {
@@ -58,18 +75,41 @@ export declare class ActivitiesService {
             createdAt: Date;
             title: string;
             description: string;
+            status: import(".prisma/client").$Enums.ActivityStatus;
             professorId: string;
         };
     } & {
         id: string;
         createdAt: Date;
-        activityId: string;
+        status: import(".prisma/client").$Enums.SubmissionStatus;
         studentId: string;
+        activityId: string;
         answers: number[];
-        score: number;
+        score: number | null;
+        feedback: string | null;
+        correctedAt: Date | null;
     })[]>;
+    correctSubmission(submissionId: string, score: number, feedback: string): Promise<{
+        id: string;
+        createdAt: Date;
+        status: import(".prisma/client").$Enums.SubmissionStatus;
+        studentId: string;
+        activityId: string;
+        answers: number[];
+        score: number | null;
+        feedback: string | null;
+        correctedAt: Date | null;
+    }>;
     getProfessorResults(professorId: string): Promise<({
         activity: {
+            questions: {
+                id: string;
+                statement: string;
+                options: string[];
+                answer: number;
+                activityId: string;
+            }[];
+        } & {
             id: string;
             educationLevel: import(".prisma/client").$Enums.EducationLevel;
             gradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
@@ -78,6 +118,7 @@ export declare class ActivitiesService {
             createdAt: Date;
             title: string;
             description: string;
+            status: import(".prisma/client").$Enums.ActivityStatus;
             professorId: string;
         };
         student: {
@@ -96,9 +137,24 @@ export declare class ActivitiesService {
     } & {
         id: string;
         createdAt: Date;
-        activityId: string;
+        status: import(".prisma/client").$Enums.SubmissionStatus;
         studentId: string;
+        activityId: string;
         answers: number[];
-        score: number;
+        score: number | null;
+        feedback: string | null;
+        correctedAt: Date | null;
     })[]>;
+    updateActivity(id: string, dto: any): Promise<{
+        id: string;
+        educationLevel: import(".prisma/client").$Enums.EducationLevel;
+        gradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
+        grade: import(".prisma/client").$Enums.Grade | null;
+        highSchoolYear: import(".prisma/client").$Enums.HighSchoolGrade | null;
+        createdAt: Date;
+        title: string;
+        description: string;
+        status: import(".prisma/client").$Enums.ActivityStatus;
+        professorId: string;
+    }>;
 }

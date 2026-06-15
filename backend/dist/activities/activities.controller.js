@@ -35,6 +35,15 @@ let ActivitiesController = class ActivitiesController {
     professorResults(req) {
         return this.service.getProfessorResults(req.user.id);
     }
+    correct(id, body) {
+        return this.service.correctSubmission(id, body.score, body.feedback);
+    }
+    publish(id) {
+        return this.service.publishActivity(id);
+    }
+    update(id, dto) {
+        return this.service.updateActivity(id, dto);
+    }
 };
 exports.ActivitiesController = ActivitiesController;
 __decorate([
@@ -74,6 +83,29 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ActivitiesController.prototype, "professorResults", null);
+__decorate([
+    (0, common_1.Post)('submission/:id/correct'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ActivitiesController.prototype, "correct", null);
+__decorate([
+    (0, common_1.Post)(':id/publish'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ActivitiesController.prototype, "publish", null);
+__decorate([
+    (0, common_1.Post)(':id/update'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ActivitiesController.prototype, "update", null);
 exports.ActivitiesController = ActivitiesController = __decorate([
     (0, common_1.Controller)('activities'),
     __metadata("design:paramtypes", [activities_service_1.ActivitiesService])

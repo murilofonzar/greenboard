@@ -15,22 +15,38 @@ export default function Results() {
       <h1 className="text-3xl mb-6">
         Meus Resultados
       </h1>
+      
 
       <div className="space-y-4">
-        {results.map((r) => (
-          <div
-            key={r.id}
-            className="bg-black/40 rounded-2xl p-6"
-          >
-            <h2 className="text-2xl">
-              {r.activity.title}
-            </h2>
+        {results.map((result) => (
+<div>
+  <h3>
+    {result.activity.title}
+  </h3>
 
-            <p className="text-gray-300 mt-2">
-              Nota: {r.score}/
-              {r.answers.length}
-            </p>
-          </div>
+  <p>
+    Status:
+    {result.status ===
+    'PENDING'
+      ? ' Aguardando correção'
+      : ' Corrigida'}
+  </p>
+
+  {result.score != null && (
+    <p>
+      Nota:
+      {result.score}
+    </p>
+  )}
+
+  {result.feedback && (
+    <p>
+      Feedback:
+      {result.feedback}
+    </p>
+  )}
+</div>
+          
         ))}
       </div>
     </div>

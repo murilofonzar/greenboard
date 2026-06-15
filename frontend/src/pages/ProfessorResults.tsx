@@ -3,6 +3,8 @@ import { api } from "../api";
 
 export default function ProfessorResults() {
   const [results, setResults] = useState<any[]>([]);
+  const [score, setScore] = useState({});
+  const [feedback, setFeedback] = useState({});
 
   useEffect(() => {
     api
@@ -26,17 +28,50 @@ export default function ProfessorResults() {
               {r.activity.title}
             </h2>
 
-            <p className="mt-2">
+            <p>
               Aluno: {r.student.name}
             </p>
 
-            <p>
-              Nota: {r.score}/
-              {r.answers.length}
-            </p>
+            <hr className="my-4" />
+
+            {r.activity.questions.map(
+              (q: any, index: number) => (
+                <div
+                  key={q.id}
+                  className="mb-4"
+                >
+                  <p>
+                    <strong>
+                      {q.statement}
+                    </strong>
+                  </p>
+
+                  <p>
+                    Resposta correta:
+                    {" "}
+                    {q.options[q.answer]}
+                  </p>
+
+                  <p>
+                    Aluno marcou:
+                    {" "}
+                    {
+                      q.options[
+                      r.answers[index]
+                      ]
+                    }
+                  </p>
+                </div>
+              ),
+            )}
           </div>
         ))}
+
       </div>
+
     </div>
+
   );
+
+
 }

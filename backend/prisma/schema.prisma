@@ -41,13 +41,18 @@ enum HighSchoolGrade {
   TERCEIRO
 }
 
+enum ActivityStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model User {
-  id             String   @id @default(uuid())
-  name           String
-  email          String   @unique
-  password       String
-  role           Role
-  birthDate      DateTime
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  birthDate DateTime
 
   educationLevel EducationLevel?
   gradeGroup     GradeGroup?
@@ -55,54 +60,69 @@ model User {
   grade          Grade?
   highSchoolYear HighSchoolGrade?
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  activities     Activity[]
-  submissions    Submission[]
+  activities  Activity[]
+  submissions Submission[]
 }
 
 model Activity {
-  id               String   @id @default(uuid())
-  title            String
-  description      String
+  id          String @id @default(uuid())
+  title       String
+  description String
 
-  educationLevel   EducationLevel
-  gradeGroup       GradeGroup?
-  grade             Grade?
-  highSchoolYear    HighSchoolGrade?
+  status ActivityStatus @default(DRAFT)
 
-  professorId      String
-  professor        User @relation(fields: [professorId], references: [id])
+  educationLevel EducationLevel
+  gradeGroup     GradeGroup?
+  grade          Grade?
+  highSchoolYear HighSchoolGrade?
 
-  questions        Question[]
-  submissions      Submission[]
 
-  createdAt        DateTime @default(now())
+  professorId String
+  professor   User   @relation(fields: [professorId], references: [id])
+
+  questions   Question[]
+  submissions Submission[]
+
+  createdAt DateTime @default(now())
 }
 
 model Question {
-  id          String   @id @default(uuid())
-  statement   String
-  options     String[]
-  answer      Int
+  id        String   @id @default(uuid())
+  statement String
+  options   String[]
+  answer    Int
 
-  activityId  String
-  activity    Activity @relation(fields: [activityId], references: [id])
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id])
+}
+
+enum SubmissionStatus {
+  PENDING
+  CORRECTED
 }
 
 model Submission {
-  id          String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  studentId   String
-  student     User     @relation(fields: [studentId], references: [id])
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
 
-  activityId  String
-  activity    Activity @relation(fields: [activityId], references: [id])
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id])
 
-  answers     Int[]
-  score       Int
+  answers Int[]
 
-  createdAt   DateTime @default(now())
+  score Int?
+
+  feedback String?
+
+  status SubmissionStatus @default(PENDING)
+
+  correctedAt DateTime?
+
+  createdAt DateTime @default(now())
 
   @@unique([studentId, activityId])
 }

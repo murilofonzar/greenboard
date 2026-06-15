@@ -45,15 +45,29 @@ let ActivitiesService = class ActivitiesService {
                 include: {
                     questions: true,
                 },
+                orderBy: {
+                    createdAt: 'desc',
+                },
             });
         }
+        const submissions = await this.prisma.submission.findMany({
+            where: {
+                studentId: user.id,
+            },
+            select: {
+                activityId: true,
+            },
+        });
+        const answeredIds = submissions.map((s) => s.activityId);
         return this.prisma.activity.findMany({
             where: {
+                status: 'PUBLISHED',
+                id: {
+                    notIn: answeredIds,
+                },
                 educationLevel: user.educationLevel,
                 OR: [
-                    {
-                        grade: user.grade,
-                    },
+                    { grade: user.grade },
                     {
                         highSchoolYear: user.highSchoolYear,
                     },
@@ -100,6 +114,16 @@ let ActivitiesService = class ActivitiesService {
             },
         });
     }
+    async publishActivity(id) {
+        return this.prisma.activity.update({
+            where: {
+                id,
+            },
+            data: {
+                status: 'PUBLISHED',
+            },
+        });
+    }
     async getStudentResults(studentId) {
         return this.prisma.submission.findMany({
             where: {
@@ -113,6 +137,19 @@ let ActivitiesService = class ActivitiesService {
             },
         });
     }
+    async correctSubmission(submissionId, score, feedback) {
+        return this.prisma.submission.update({
+            where: {
+                id: submissionId,
+            },
+            data: {
+                score,
+                feedback,
+                status: 'CORRECTED',
+                correctedAt: new Date(),
+            },
+        });
+    }
     async getProfessorResults(professorId) {
         return this.prisma.submission.findMany({
             where: {
@@ -122,10 +159,25 @@ let ActivitiesService = class ActivitiesService {
             },
             include: {
                 student: true,
-                activity: true,
+                activity: {
+                    include: {
+                        questions: true,
+                    },
+                },
             },
             orderBy: {
                 createdAt: 'desc',
+            },
+        });
+    }
+    async updateActivity(id, dto) {
+        return this.prisma.activity.update({
+            where: {
+                id,
+            },
+            data: {
+                title: dto.title,
+                description: dto.description,
             },
         });
     }

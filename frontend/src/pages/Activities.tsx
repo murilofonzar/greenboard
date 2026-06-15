@@ -31,7 +31,11 @@ export default function Activities() {
 
       <div className="grid gap-6">
 
-        {activities.map((activity) => (
+        {activities.length === 0 ? (
+  <p>
+    Nenhuma atividade disponível.
+  </p>
+) : activities.map((activity) => (
           <Card key={activity.id}>
 
             <div className="flex items-start justify-between">

@@ -6,9 +6,12 @@ import Home from "./pages/Home";
 import Register from "./pages/Register";
 import Sidebar from "./components/Sidebar";
 import CreateActivity from "./pages/CreateActivity";
+import Results from "./pages/Results";
+import ProfessorResults from "./pages/ProfessorResults";
 
 import { getAuth } from "./auth";
 import { setAuthToken } from "./api";
+
 
 export default function App() {
   const [page, setPage] = useState("home");
@@ -71,6 +74,14 @@ export default function App() {
 
         {page === "create" && (
           <CreateActivity />
+        )}
+
+        {page === "results" && (
+          <Results />
+        )}
+
+        {page === "submissions" && (
+          <ProfessorResults />
         )}
 
       </div>
