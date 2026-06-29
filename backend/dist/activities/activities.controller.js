@@ -27,6 +27,9 @@ let ActivitiesController = class ActivitiesController {
         return this.service.findAll(req.user);
     }
     submit(id, req, body) {
+        if (req.user.role !== 'ALUNO') {
+            throw new common_1.ForbiddenException('Somente alunos podem responder atividades');
+        }
         return this.service.submit(id, req.user.id, body.answers);
     }
     studentResults(req) {

@@ -13,6 +13,12 @@ CREATE TYPE "Grade" AS ENUM ('PRIMEIRO_ANO', 'SEGUNDO_ANO', 'TERCEIRO_ANO', 'QUA
 -- CreateEnum
 CREATE TYPE "HighSchoolGrade" AS ENUM ('PRIMEIRO', 'SEGUNDO', 'TERCEIRO');
 
+-- CreateEnum
+CREATE TYPE "ActivityStatus" AS ENUM ('DRAFT', 'PUBLISHED');
+
+-- CreateEnum
+CREATE TYPE "SubmissionStatus" AS ENUM ('PENDING', 'CORRECTED');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -35,8 +41,9 @@ CREATE TABLE "Activity" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
+    "status" "ActivityStatus" NOT NULL DEFAULT 'DRAFT',
     "educationLevel" "EducationLevel" NOT NULL,
-    "gradeGroup" "GradeGroup" NOT NULL,
+    "gradeGroup" "GradeGroup",
     "grade" "Grade",
     "highSchoolYear" "HighSchoolGrade",
     "professorId" TEXT NOT NULL,
@@ -62,7 +69,10 @@ CREATE TABLE "Submission" (
     "studentId" TEXT NOT NULL,
     "activityId" TEXT NOT NULL,
     "answers" INTEGER[],
-    "score" INTEGER NOT NULL,
+    "score" INTEGER,
+    "feedback" TEXT,
+    "status" "SubmissionStatus" NOT NULL DEFAULT 'PENDING',
+    "correctedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Submission_pkey" PRIMARY KEY ("id")
@@ -70,6 +80,9 @@ CREATE TABLE "Submission" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Submission_studentId_activityId_key" ON "Submission"("studentId", "activityId");
 
 -- AddForeignKey
 ALTER TABLE "Activity" ADD CONSTRAINT "Activity_professorId_fkey" FOREIGN KEY ("professorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -79,3 +92,6 @@ ALTER TABLE "Question" ADD CONSTRAINT "Question_activityId_fkey" FOREIGN KEY ("a
 
 -- AddForeignKey
 ALTER TABLE "Submission" ADD CONSTRAINT "Submission_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Submission" ADD CONSTRAINT "Submission_activityId_fkey" FOREIGN KEY ("activityId") REFERENCES "Activity"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

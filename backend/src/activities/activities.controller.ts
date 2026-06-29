@@ -1,11 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
 
 import { ActivitiesService } from './activities.service';
 
 @Controller('activities')
 export class ActivitiesController {
-  constructor(private readonly service: ActivitiesService) {}
+  constructor(private readonly service: ActivitiesService) { }
 
   @Post()
   create(@Body() dto: any) {
@@ -19,6 +27,9 @@ export class ActivitiesController {
 
   @Post(':id/submit')
   submit(@Param('id') id: string, @Req() req: any, @Body() body: any) {
+    if (req.user.role !== 'ALUNO') {
+      throw new ForbiddenException('Somente alunos podem responder atividades');
+    }
     return this.service.submit(id, req.user.id, body.answers);
   }
 

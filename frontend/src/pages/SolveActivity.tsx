@@ -22,6 +22,11 @@ export default function SolveActivity({ activity }: any) {
       }
     );
 
+    if (answers.length !== activity.questions.length) {
+      alert("Responda todas as questões");
+      return;
+    }
+
     alert("Atividade enviada!");
     setFinished(true);
   };

@@ -3,7 +3,8 @@ import { getAuth } from "../auth";
 export default function Sidebar({ setPage, logout }: any) {
   const auth = getAuth();
 
-  const isProfessor = auth?.user?.role === "PROFESSOR";
+  const isProfessor =
+    auth?.user?.role === "PROFESSOR";
 
   return (
     <div className="w-64 min-h-screen bg-green-950 text-white p-6 flex flex-col justify-between shadow-2xl">
@@ -13,6 +14,7 @@ export default function Sidebar({ setPage, logout }: any) {
         </h1>
 
         <div className="space-y-3">
+
           <button
             onClick={() => setPage("activities")}
             className="w-full text-left hover:bg-green-800 p-3 rounded-xl transition"
@@ -46,6 +48,7 @@ export default function Sidebar({ setPage, logout }: any) {
               </button>
             </>
           )}
+
         </div>
       </div>
 

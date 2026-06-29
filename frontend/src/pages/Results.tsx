@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import Card from "../components/Card";
 
 export default function Results() {
   const [results, setResults] = useState<any[]>([]);
@@ -16,10 +17,34 @@ export default function Results() {
         Meus Resultados
       </h1>
       
+      
 
       <div className="space-y-4">
         {results.map((result) => (
 <div>
+  <Card>
+  <h2>{result.activity.title}</h2>
+
+  <div>
+    Status:
+    {result.status === "PENDING"
+      ? "Aguardando correção"
+      : "Corrigida"}
+  </div>
+
+  {result.score != null && (
+    <div>
+      Nota: {result.score}
+    </div>
+  )}
+
+  {result.feedback && (
+    <div>
+      Feedback do professor:
+      {result.feedback}
+    </div>
+  )}
+</Card>
   <h3>
     {result.activity.title}
   </h3>
@@ -31,6 +56,7 @@ export default function Results() {
       ? ' Aguardando correção'
       : ' Corrigida'}
   </p>
+  
 
   {result.score != null && (
     <p>

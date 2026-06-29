@@ -8,14 +8,17 @@ import Sidebar from "./components/Sidebar";
 import CreateActivity from "./pages/CreateActivity";
 import Results from "./pages/Results";
 import ProfessorResults from "./pages/ProfessorResults";
+import EditActivity from "./pages/EditActivity";
 
 import { getAuth } from "./auth";
 import { setAuthToken } from "./api";
 
-
 export default function App() {
   const [page, setPage] = useState("home");
   const [logged, setLogged] = useState(false);
+
+  const [selectedActivity, setSelectedActivity] =
+    useState<any>(null);
 
   useEffect(() => {
     const auth = getAuth();
@@ -32,12 +35,19 @@ export default function App() {
 
     setLogged(false);
     setPage("home");
+    setSelectedActivity(null);
   };
 
+  // HOME
   if (page === "home") {
-    return <Home onStart={() => setPage("login")} />;
+    return (
+      <Home
+        onStart={() => setPage("login")}
+      />
+    );
   }
 
+  // LOGIN / REGISTER
   if (!logged) {
     if (page === "login") {
       return (
@@ -53,14 +63,15 @@ export default function App() {
 
     if (page === "register") {
       return (
-        <Register goLogin={() => setPage("login")} />
+        <Register
+          goLogin={() => setPage("login")}
+        />
       );
     }
   }
 
   return (
     <div className="flex min-h-screen">
-
       <Sidebar
         setPage={setPage}
         logout={logout}
@@ -69,7 +80,10 @@ export default function App() {
       <div className="flex-1 overflow-auto">
 
         {page === "activities" && (
-          <Activities />
+          <Activities
+            setPage={setPage}
+            setSelectedActivity={setSelectedActivity}
+          />
         )}
 
         {page === "create" && (
@@ -82,6 +96,13 @@ export default function App() {
 
         {page === "submissions" && (
           <ProfessorResults />
+        )}
+
+        {page === "editActivity" && (
+          <EditActivity
+            activity={selectedActivity}
+            onBack={() => setPage("activities")}
+          />
         )}
 
       </div>
