@@ -9,6 +9,7 @@ import CreateActivity from "./pages/CreateActivity";
 import Results from "./pages/Results";
 import ProfessorResults from "./pages/ProfessorResults";
 import EditActivity from "./pages/EditActivity";
+import CreateWordSearch from "./pages/CreateWordSearch";
 
 import { getAuth } from "./auth";
 import { setAuthToken } from "./api";
@@ -87,7 +88,16 @@ export default function App() {
         )}
 
         {page === "create" && (
-          <CreateActivity />
+          <CreateActivity
+            onBack={() => setPage("activities")}
+          />
+        )}
+
+        {page === "createWordSearch" && (
+          <CreateWordSearch
+            onBack={() => setPage("activities")}
+            onSuccess={() => setPage("activities")}
+          />
         )}
 
         {page === "results" && (

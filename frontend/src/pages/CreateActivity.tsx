@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { api } from "../api";
-import { getAuth } from "../auth";
+import { api, getErrorMessage } from "../api";
 import Card from "../components/Card";
+import { ActivityMediaEditor, QuestionMediaEditor } from "../components/Media";
+import type { ActivityMedia } from "../types";
 
-export default function CreateActivity() {
+interface CreateActivityProps {
+  onBack: () => void;
+}
+
+export default function CreateActivity({ onBack }: CreateActivityProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
@@ -21,6 +26,8 @@ export default function CreateActivity() {
 
   const [questions, setQuestions] = useState<any[]>([]);
 
+  const [media, setMedia] = useState<ActivityMedia[]>([]);
+
   const addQuestion = () => {
     setQuestions([
       ...questions,
@@ -28,6 +35,8 @@ export default function CreateActivity() {
         statement: "",
         options: ["", "", "", ""],
         answer: 0,
+        imageUrl: null,
+        audioUrl: null,
       },
     ]);
   };
@@ -57,11 +66,10 @@ export default function CreateActivity() {
   };
 
   const save = async () => {
-    const auth = getAuth();
-
     const payload = {
       title,
       description,
+      type: "MULTIPLE_CHOICE",
 
       educationLevel,
 
@@ -80,23 +88,32 @@ export default function CreateActivity() {
           ? highSchoolYear
           : null,
 
-      professorId: auth.user.id,
+      media,
 
       questions,
     };
 
-    console.log(payload);
-
-    await api.post("/activities", payload);
-
-    alert("Atividade criada!");
+    try {
+      await api.post("/activities", payload);
+      alert("Atividade criada!");
+      onBack();
+    } catch (error) {
+      alert(getErrorMessage(error, "Erro ao criar atividade"));
+    }
   };
 
   return (
     <div className="p-8 text-white min-h-screen">
 
+      <button
+        onClick={onBack}
+        className="mb-4 text-blue-400 hover:text-blue-300"
+      >
+        ← Voltar
+      </button>
+
       <h1 className="text-4xl chalk mb-8">
-        Criar atividade
+        Criar Atividade de Múltipla Escolha
       </h1>
 
       <Card>
@@ -265,6 +282,12 @@ export default function CreateActivity() {
 
       </Card>
 
+      <div className="mt-8">
+        <Card>
+          <ActivityMediaEditor value={media} onChange={setMedia} />
+        </Card>
+      </div>
+
       <div className="space-y-6 mt-8">
 
         {questions.map((q, i) => (
@@ -352,6 +375,14 @@ export default function CreateActivity() {
                 )}
 
               </div>
+
+              <QuestionMediaEditor
+                imageUrl={q.imageUrl}
+                audioUrl={q.audioUrl}
+                onChange={(field, value) =>
+                  updateQuestion(i, field, value)
+                }
+              />
 
             </div>
 

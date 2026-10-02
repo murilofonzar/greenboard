@@ -3,8 +3,6 @@ import { api } from "../api";
 
 export default function ProfessorResults() {
   const [results, setResults] = useState<any[]>([]);
-  const [score, setScore] = useState({});
-  const [feedback, setFeedback] = useState({});
 
   useEffect(() => {
     api

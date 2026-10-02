@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api } from "../api";
+import { api, getErrorMessage } from "../api";
 import Button from "../components/Button";
 
 export default function Register({ goLogin }: any) {
@@ -9,9 +9,9 @@ export default function Register({ goLogin }: any) {
     password: "",
     role: "ALUNO",
     birthDate: "",
+    accessCode: "",
 
     educationLevel: "ENSINO_FUNDAMENTAL",
-    gradeGroup: "ANOS_INICIAIS",
 
     grade: "PRIMEIRO_ANO",
     highSchoolYear: "PRIMEIRO",
@@ -25,7 +25,35 @@ export default function Register({ goLogin }: any) {
   };
 
   const register = async () => {
-    await api.post("/auth/register", form);
+    const base = {
+      name: form.name,
+      email: form.email,
+      password: form.password,
+      birthDate: form.birthDate,
+    };
+
+    const isProfessor = form.role === "PROFESSOR";
+    const isFundamental = form.educationLevel === "ENSINO_FUNDAMENTAL";
+
+    try {
+      if (isProfessor) {
+        await api.post("/auth/register/professor", {
+          ...base,
+          ...(form.accessCode && { accessCode: form.accessCode }),
+        });
+      } else {
+        await api.post("/auth/register/student", {
+          ...base,
+          educationLevel: form.educationLevel,
+          ...(isFundamental
+            ? { grade: form.grade }
+            : { highSchoolYear: form.highSchoolYear }),
+        });
+      }
+    } catch (error) {
+      alert(getErrorMessage(error, "Erro ao registrar"));
+      return;
+    }
 
     alert("Registrado com sucesso!");
     goLogin();
@@ -79,6 +107,15 @@ export default function Register({ goLogin }: any) {
             <option value="PROFESSOR">Professor</option>
           </select>
 
+          {form.role === "PROFESSOR" && (
+            <input
+              name="accessCode"
+              placeholder="Código de acesso do professor (se exigido pela escola)"
+              className="w-full p-3 rounded text-black"
+              onChange={handle}
+            />
+          )}
+
           {form.role === "ALUNO" && (
             <>
               <select
@@ -96,37 +133,21 @@ export default function Register({ goLogin }: any) {
               </select>
 
               {form.educationLevel === "ENSINO_FUNDAMENTAL" && (
-                <>
-                  <select
-                    name="gradeGroup"
-                    className="w-full p-3 rounded text-black"
-                    onChange={handle}
-                  >
-                    <option value="ANOS_INICIAIS">
-                      Anos Iniciais
-                    </option>
-
-                    <option value="ANOS_FINAIS">
-                      Anos Finais
-                    </option>
-                  </select>
-
-                  <select
-                    name="grade"
-                    className="w-full p-3 rounded text-black"
-                    onChange={handle}
-                  >
-                    <option value="PRIMEIRO_ANO">1º ano</option>
-                    <option value="SEGUNDO_ANO">2º ano</option>
-                    <option value="TERCEIRO_ANO">3º ano</option>
-                    <option value="QUARTO_ANO">4º ano</option>
-                    <option value="QUINTO_ANO">5º ano</option>
-                    <option value="SEXTO_ANO">6º ano</option>
-                    <option value="SETIMO_ANO">7º ano</option>
-                    <option value="OITAVO_ANO">8º ano</option>
-                    <option value="NONO_ANO">9º ano</option>
-                  </select>
-                </>
+                <select
+                  name="grade"
+                  className="w-full p-3 rounded text-black"
+                  onChange={handle}
+                >
+                  <option value="PRIMEIRO_ANO">1º ano</option>
+                  <option value="SEGUNDO_ANO">2º ano</option>
+                  <option value="TERCEIRO_ANO">3º ano</option>
+                  <option value="QUARTO_ANO">4º ano</option>
+                  <option value="QUINTO_ANO">5º ano</option>
+                  <option value="SEXTO_ANO">6º ano</option>
+                  <option value="SETIMO_ANO">7º ano</option>
+                  <option value="OITAVO_ANO">8º ano</option>
+                  <option value="NONO_ANO">9º ano</option>
+                </select>
               )}
 
               {form.educationLevel === "ENSINO_MEDIO" && (

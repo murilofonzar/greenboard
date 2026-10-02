@@ -1,0 +1,929 @@
+{
+  "info": {
+    "name": "Greenboard API",
+    "description": "Collection para testes da API Greenboard.\n\nOrdem sugerida: execute as pastas na sequência (Auth → Media → Activities - Professor → Activities - Aluno → Resultados). Os scripts de teste salvam automaticamente tokens, IDs e URLs de mídia nas variáveis da collection.\n\nPara os uploads, selecione um arquivo no campo `file` (form-data) das requisições da pasta Media.\n\nSwagger: {{baseUrl}}/api/docs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "password", "value": "Senha123" },
+    { "key": "professorAccessCode", "value": "" },
+    { "key": "professorEmail", "value": "" },
+    { "key": "studentEmail", "value": "" },
+    { "key": "professorToken", "value": "" },
+    { "key": "studentToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "activityId", "value": "" },
+    { "key": "wordSearchActivityId", "value": "" },
+    { "key": "submissionId", "value": "" },
+    { "key": "imageUrl", "value": "https://upload.wikimedia.org/wikipedia/commons/2/26/YellowLabradorLooking_new.jpg" },
+    { "key": "audioUrl", "value": "" }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Tempo de resposta < 3s', () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "auth": { "type": "noauth" },
+      "item": [
+        {
+          "name": "Cadastrar professor",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('professorEmail', `professor.${Date.now()}@example.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Retorna tokens', () => {",
+                  "  pm.expect(body.access_token).to.be.a('string');",
+                  "  pm.expect(body.refresh_token).to.be.a('string');",
+                  "});",
+                  "pm.test('Role PROFESSOR', () => pm.expect(body.user.role).to.eql('PROFESSOR'));",
+                  "pm.collectionVariables.set('professorToken', body.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Professora Ana\",\n  \"email\": \"{{professorEmail}}\",\n  \"password\": \"{{password}}\",\n  \"birthDate\": \"1985-03-10\",\n  \"accessCode\": \"{{professorAccessCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/professor",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "professor"]
+            },
+            "description": "Cadastra um professor. `accessCode` só é exigido se `PROFESSOR_REGISTRATION_CODE` estiver configurado no servidor."
+          }
+        },
+        {
+          "name": "Cadastrar aluno (Ensino Fundamental)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('studentEmail', `aluno.${Date.now()}@example.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Role ALUNO', () => pm.expect(body.user.role).to.eql('ALUNO'));",
+                  "pm.test('gradeGroup calculado', () => pm.expect(body.user.gradeGroup).to.eql('ANOS_FINAIS'));",
+                  "pm.collectionVariables.set('studentToken', body.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aluno Pedro\",\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{password}}\",\n  \"birthDate\": \"2012-07-21\",\n  \"educationLevel\": \"ENSINO_FUNDAMENTAL\",\n  \"grade\": \"OITAVO_ANO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/student",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "student"]
+            }
+          }
+        },
+        {
+          "name": "Cadastrar aluno (Ensino Médio)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('gradeGroup ENSINO_MEDIO', () => pm.expect(body.user.gradeGroup).to.eql('ENSINO_MEDIO'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aluna Julia\",\n  \"email\": \"aluna.medio.{{$timestamp}}@example.com\",\n  \"password\": \"{{password}}\",\n  \"birthDate\": \"2008-02-14\",\n  \"educationLevel\": \"ENSINO_MEDIO\",\n  \"highSchoolYear\": \"SEGUNDO\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/student",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "student"]
+            }
+          }
+        },
+        {
+          "name": "Cadastrar aluno - inválido (sem série)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aluno Sem Serie\",\n  \"email\": \"sem.serie.{{$timestamp}}@example.com\",\n  \"password\": \"{{password}}\",\n  \"birthDate\": \"2012-07-21\",\n  \"educationLevel\": \"ENSINO_FUNDAMENTAL\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register/student",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register", "student"]
+            }
+          }
+        },
+        {
+          "name": "Login professor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('professorToken', body.access_token);",
+                  "pm.collectionVariables.set('refreshToken', body.refresh_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{professorEmail}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login aluno",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('studentToken', pm.response.json().access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - credenciais inválidas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{professorEmail}}\",\n  \"password\": \"SenhaErrada1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Renovar token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('professorToken', body.access_token);",
+                  "pm.collectionVariables.set('refreshToken', body.refresh_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Usuário autenticado (me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Não expõe senha', () => pm.expect(pm.response.json()).to.not.have.property('password'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{professorToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Media",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{professorToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Upload de imagem",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Tipo IMAGE', () => pm.expect(body.type).to.eql('IMAGE'));",
+                  "pm.collectionVariables.set('imageUrl', body.url);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "Selecione uma imagem (.jpg, .png, .gif, .webp) até 10 MB" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "upload"]
+            },
+            "description": "Selecione o arquivo no campo `file` antes de enviar. A URL retornada é salva em `imageUrl`."
+          }
+        },
+        {
+          "name": "Upload de áudio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Tipo AUDIO', () => pm.expect(body.type).to.eql('AUDIO'));",
+                  "pm.collectionVariables.set('audioUrl', body.url);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "Selecione um áudio (.mp3, .wav, .ogg, .m4a, .webm, .aac) até 10 MB" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "upload"]
+            },
+            "description": "Selecione o arquivo no campo `file` antes de enviar. A URL retornada é salva em `audioUrl`."
+          }
+        },
+        {
+          "name": "Upload - aluno não pode enviar (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{studentToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "upload"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activities - Professor",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{professorToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Criar atividade múltipla escolha com imagem e áudio",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Sem upload de áudio, remove o campo para não falhar na validação",
+                  "const body = JSON.parse(pm.request.body.raw.replace(/\\{\\{(\\w+)\\}\\}/g, (_, k) => pm.collectionVariables.get(k) ?? ''));",
+                  "if (!pm.collectionVariables.get('audioUrl')) {",
+                  "  body.media = body.media.filter((m) => m.type !== 'AUDIO');",
+                  "  body.questions.forEach((q) => delete q.audioUrl);",
+                  "}",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('Possui mídias', () => pm.expect(body.media.length).to.be.above(0));",
+                  "pm.collectionVariables.set('activityId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Animals - Listen and Choose\",\n  \"description\": \"Ouça o áudio e observe a imagem antes de responder.\",\n  \"type\": \"MULTIPLE_CHOICE\",\n  \"educationLevel\": \"ENSINO_FUNDAMENTAL\",\n  \"gradeGroup\": \"ANOS_FINAIS\",\n  \"grade\": \"OITAVO_ANO\",\n  \"media\": [\n    { \"type\": \"IMAGE\", \"url\": \"{{imageUrl}}\", \"caption\": \"Observe o animal\" },\n    { \"type\": \"AUDIO\", \"url\": \"{{audioUrl}}\", \"caption\": \"Ouça a pronúncia\" }\n  ],\n  \"questions\": [\n    {\n      \"statement\": \"Qual animal aparece na imagem?\",\n      \"options\": [\"Dog\", \"Cat\", \"Bird\", \"Fish\"],\n      \"answer\": 0,\n      \"imageUrl\": \"{{imageUrl}}\"\n    },\n    {\n      \"statement\": \"Qual palavra foi pronunciada no áudio?\",\n      \"options\": [\"House\", \"Dog\", \"Tree\", \"Car\"],\n      \"answer\": 1,\n      \"audioUrl\": \"{{audioUrl}}\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities"]
+            }
+          }
+        },
+        {
+          "name": "Criar atividade - URL de mídia inválida (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Teste inválido\",\n  \"description\": \"URL javascript não é permitida\",\n  \"educationLevel\": \"ENSINO_FUNDAMENTAL\",\n  \"media\": [{ \"type\": \"IMAGE\", \"url\": \"javascript:alert(1)\" }],\n  \"questions\": [{ \"statement\": \"?\", \"options\": [\"a\", \"b\"], \"answer\": 0 }]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities"]
+            }
+          }
+        },
+        {
+          "name": "Criar caça palavras",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('wordSearchActivityId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Caça Palavras - Animais\",\n  \"description\": \"Encontre os animais em inglês\",\n  \"type\": \"WORD_SEARCH\",\n  \"educationLevel\": \"ENSINO_FUNDAMENTAL\",\n  \"grade\": \"OITAVO_ANO\",\n  \"media\": [{ \"type\": \"IMAGE\", \"url\": \"{{imageUrl}}\", \"caption\": \"Dica\" }],\n  \"grid\": [\"CATXX\", \"DOGXX\", \"XXXXX\"],\n  \"words\": [\"CAT\", \"DOG\"],\n  \"orientation\": [\"h\", \"h\"],\n  \"positions\": [\"0,0\", \"1,0\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities"]
+            }
+          }
+        },
+        {
+          "name": "Listar minhas atividades",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities?skip=0&take=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities"],
+              "query": [
+                { "key": "skip", "value": "0" },
+                { "key": "take", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obter atividade",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Professor vê o gabarito', () => pm.expect(pm.response.json().questions[0]).to.have.property('answer'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/{{activityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "{{activityId}}"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar atividade (mídias)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Animals - Listen and Choose (v2)\",\n  \"media\": [\n    { \"type\": \"IMAGE\", \"url\": \"{{imageUrl}}\", \"caption\": \"Imagem atualizada\" }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activities/{{activityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "{{activityId}}"]
+            }
+          }
+        },
+        {
+          "name": "Publicar atividade",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Publicada', () => pm.expect(pm.response.json().status).to.eql('PUBLISHED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/activities/{{activityId}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "{{activityId}}", "publish"]
+            }
+          }
+        },
+        {
+          "name": "Publicar caça palavras",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/activities/{{wordSearchActivityId}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "{{wordSearchActivityId}}", "publish"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activities - Aluno",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{studentToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Listar atividades disponíveis",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const list = pm.response.json();",
+                  "pm.test('Sem gabarito para alunos', () => {",
+                  "  list.forEach((a) => (a.questions || []).forEach((q) => pm.expect(q).to.not.have.property('answer')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities"]
+            }
+          }
+        },
+        {
+          "name": "Obter atividade (com mídias)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('Possui mídias', () => pm.expect(body.media).to.be.an('array'));",
+                  "pm.test('Sem gabarito', () => pm.expect(body.questions[0]).to.not.have.property('answer'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/{{activityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "{{activityId}}"]
+            }
+          }
+        },
+        {
+          "name": "Responder múltipla escolha",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('submissionId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [0, 1]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activities/{{activityId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "{{activityId}}", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Responder caça palavras",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"foundWords\": [\"CAT\", \"DOG\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activities/{{wordSearchActivityId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "{{wordSearchActivityId}}", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Responder novamente (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [0, 1]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activities/{{activityId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "{{activityId}}", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Aluno não pode criar atividade (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"x\",\n  \"description\": \"x\",\n  \"educationLevel\": \"ENSINO_FUNDAMENTAL\",\n  \"questions\": [{ \"statement\": \"?\", \"options\": [\"a\", \"b\"], \"answer\": 0 }]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activities",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities"]
+            }
+          }
+        },
+        {
+          "name": "Meus resultados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/results/student?skip=0&take=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "results", "student"],
+              "query": [
+                { "key": "skip", "value": "0" },
+                { "key": "take", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resultados - Professor",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{professorToken}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Resultados das minhas atividades",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Não expõe senha dos alunos', () => {",
+                  "  pm.response.json().forEach((s) => pm.expect(s.student).to.not.have.property('password'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/activities/results/professor?skip=0&take=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "results", "professor"],
+              "query": [
+                { "key": "skip", "value": "0" },
+                { "key": "take", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Corrigir submissão",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Corrigida', () => pm.expect(pm.response.json().status).to.eql('CORRECTED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"score\": 2,\n  \"feedback\": \"Muito bem!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/activities/submission/{{submissionId}}/correct",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "submission", "{{submissionId}}", "correct"]
+            }
+          }
+        },
+        {
+          "name": "Deletar caça palavras",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/activities/{{wordSearchActivityId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities", "{{wordSearchActivityId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

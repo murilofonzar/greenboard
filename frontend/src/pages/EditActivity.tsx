@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { api } from "../api";
+import { api, getErrorMessage } from "../api";
+import { ActivityMediaEditor } from "../components/Media";
+import type { ActivityMedia } from "../types";
 
 type Props = {
   activity: any;
@@ -18,21 +20,30 @@ export default function EditActivity({
     activity?.description || ""
   );
 
+  const [media, setMedia] = useState<ActivityMedia[]>(
+    activity?.media || []
+  );
+
   const save = async () => {
     try {
-      await api.patch(
+      await api.put(
         `/activities/${activity.id}`,
         {
           title,
           description,
+          media: media.map(({ type, url, caption, mimeType }) => ({
+            type,
+            url,
+            caption: caption || undefined,
+            mimeType: mimeType || undefined,
+          })),
         }
       );
 
       alert("Atividade atualizada");
       onBack();
     } catch (error) {
-      console.error(error);
-      alert("Erro ao atualizar atividade");
+      alert(getErrorMessage(error, "Erro ao atualizar atividade"));
     }
   };
 
@@ -101,6 +112,10 @@ export default function EditActivity({
               setDescription(e.target.value)
             }
           />
+        </div>
+
+        <div className="bg-black/30 rounded-xl p-4">
+          <ActivityMediaEditor value={media} onChange={setMedia} />
         </div>
 
         <div className="flex gap-3">

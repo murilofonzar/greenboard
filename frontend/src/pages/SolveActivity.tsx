@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { api } from "../api";
+import { api, getErrorMessage } from "../api";
+import { MediaGallery, MediaView } from "../components/Media";
 
 export default function SolveActivity({ activity }: any) {
   const [answers, setAnswers] = useState<number[]>([]);
@@ -15,15 +16,24 @@ export default function SolveActivity({ activity }: any) {
   };
 
   const submit = async () => {
-    await api.post(
-      `/activities/${activity.id}/submit`,
-      {
-        answers,
-      }
+    const answeredAll = activity.questions.every(
+      (_: any, i: number) => answers[i] !== undefined
     );
 
-    if (answers.length !== activity.questions.length) {
+    if (!answeredAll) {
       alert("Responda todas as questões");
+      return;
+    }
+
+    try {
+      await api.post(
+        `/activities/${activity.id}/submit`,
+        {
+          answers,
+        }
+      );
+    } catch (error) {
+      alert(getErrorMessage(error, "Erro ao enviar atividade"));
       return;
     }
 
@@ -52,6 +62,8 @@ export default function SolveActivity({ activity }: any) {
           {activity.description}
         </p>
 
+        <MediaGallery media={activity.media} />
+
         <div className="space-y-8">
           {activity.questions.map(
             (q: any, i: number) => (
@@ -62,6 +74,17 @@ export default function SolveActivity({ activity }: any) {
                 <h2 className="text-xl mb-4">
                   {i + 1}. {q.statement}
                 </h2>
+
+                {(q.imageUrl || q.audioUrl) && (
+                  <div className="space-y-3 mb-4">
+                    {q.imageUrl && (
+                      <MediaView type="IMAGE" url={q.imageUrl} />
+                    )}
+                    {q.audioUrl && (
+                      <MediaView type="AUDIO" url={q.audioUrl} />
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   {q.options.map(

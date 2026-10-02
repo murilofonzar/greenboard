@@ -37,14 +37,21 @@ export default function Sidebar({ setPage, logout }: any) {
                 onClick={() => setPage("create")}
                 className="w-full text-left hover:bg-green-800 p-3 rounded-xl transition"
               >
-                Criar Atividade
+                ➕ Múltipla Escolha
+              </button>
+
+              <button
+                onClick={() => setPage("createWordSearch")}
+                className="w-full text-left hover:bg-green-800 p-3 rounded-xl transition"
+              >
+                🔤 Caça Palavras
               </button>
 
               <button
                 onClick={() => setPage("submissions")}
                 className="w-full text-left hover:bg-green-800 p-3 rounded-xl transition"
               >
-                Respostas
+                📊 Respostas
               </button>
             </>
           )}
