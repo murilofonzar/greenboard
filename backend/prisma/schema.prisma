@@ -7,12 +7,69 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  PROFESSOR
+  ALUNO
+}
+
+enum EducationLevel {
+  ENSINO_FUNDAMENTAL
+  ENSINO_MEDIO
+}
+
+enum GradeGroup {
+  ANOS_INICIAIS
+  ANOS_FINAIS
+  ENSINO_MEDIO
+}
+
+enum Grade {
+  PRIMEIRO_ANO
+  SEGUNDO_ANO
+  TERCEIRO_ANO
+  QUARTO_ANO
+  QUINTO_ANO
+  SEXTO_ANO
+  SETIMO_ANO
+  OITAVO_ANO
+  NONO_ANO
+}
+
+enum HighSchoolGrade {
+  PRIMEIRO
+  SEGUNDO
+  TERCEIRO
+}
+
+enum ActivityStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ActivityType {
+  MULTIPLE_CHOICE
+  WORD_SEARCH
+}
+
+enum MediaType {
+  IMAGE
+  AUDIO
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
   email     String   @unique
   password  String
   role      Role
+  birthDate DateTime
+
+  educationLevel EducationLevel?
+  gradeGroup     GradeGroup?
+
+  grade          Grade?
+  highSchoolYear HighSchoolGrade?
+
   createdAt DateTime @default(now())
 
   activities  Activity[]
@@ -20,35 +77,101 @@ model User {
 }
 
 model Activity {
-  id          String   @id @default(uuid())
+  id          String @id @default(uuid())
   title       String
   description String
+
+  type ActivityType @default(MULTIPLE_CHOICE)
+  status ActivityStatus @default(DRAFT)
+
+  educationLevel EducationLevel
+  gradeGroup     GradeGroup?
+  grade          Grade?
+  highSchoolYear HighSchoolGrade?
+
   professorId String
-  professor   User     @relation(fields: [professorId], references: [id])
+  professor   User   @relation(fields: [professorId], references: [id])
+
   questions   Question[]
-  createdAt   DateTime @default(now())
+  wordSearch  WordSearch?
+  media       ActivityMedia[]
+  submissions Submission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Question {
-  id          String   @id @default(uuid())
-  statement   String
-  options     String[]
-  answer      Int
+  id        String   @id @default(uuid())
+  statement String
+  options   String[]
+  answer    Int
+
+  imageUrl String?
+  audioUrl String?
+
   activityId String
-  activity   Activity @relation(fields: [activityId], references: [id])
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
 }
 
-model Submission {
-  id         String   @id @default(uuid())
-  studentId String
-  student   User     @relation(fields: [studentId], references: [id])
+model ActivityMedia {
+  id       String    @id @default(uuid())
+  type     MediaType
+  url      String
+  caption  String?
+  mimeType String?
+  order    Int       @default(0)
+
   activityId String
-  answers   Int[]
-  score     Int
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([activityId])
+}
+
+model WordSearch {
+  id String @id @default(uuid())
+
+  grid       String[] // Array de strings representando a grade
+  words      String[] // Palavras para encontrar
+  orientation String[] // Orientação de cada palavra (horizontal, vertical, diagonal)
+  positions   String[] // Posições das palavras [startRow,startCol,endRow,endCol]
+
+  activityId String   @unique
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
 }
 
-enum Role {
-  PROFESSOR
-  ALUNO
+enum SubmissionStatus {
+  PENDING
+  CORRECTED
+}
+
+model Submission {
+  id String @id @default(uuid())
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  activityId String
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  answers Int[] // Para múltipla escolha
+
+  // Para caça palavras
+  foundWords String[] @default([])
+
+  score Int?
+
+  feedback String?
+
+  status SubmissionStatus @default(PENDING)
+
+  correctedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, activityId])
 }
