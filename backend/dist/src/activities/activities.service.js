@@ -78,6 +78,26 @@ let ActivitiesService = ActivitiesService_1 = class ActivitiesService {
                 take,
             });
         }
+        const student = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                educationLevel: true,
+                gradeGroup: true,
+                grade: true,
+                highSchoolYear: true,
+            },
+        });
+        if (!student ||
+            student.educationLevel === null ||
+            student.gradeGroup === null) {
+            throw new common_1.BadRequestException('O perfil do aluno não possui etapa e ano escolar');
+        }
+        const studentProfile = {
+            educationLevel: student.educationLevel,
+            gradeGroup: student.gradeGroup,
+            grade: student.grade,
+            highSchoolYear: student.highSchoolYear,
+        };
         const submissions = await this.prisma.submission.findMany({
             where: {
                 studentId: userId,
@@ -89,13 +109,10 @@ let ActivitiesService = ActivitiesService_1 = class ActivitiesService {
         const answeredIds = submissions.map((s) => s.activityId);
         const activities = await this.prisma.activity.findMany({
             where: {
-                status: 'PUBLISHED',
+                ...this.getStudentActivityFilter(studentProfile),
                 id: {
                     notIn: answeredIds,
                 },
-                educationLevel: (await this.prisma.user.findUnique({
-                    where: { id: userId },
-                }))?.educationLevel || undefined,
             },
             include: ACTIVITY_INCLUDE,
             orderBy: {
@@ -105,6 +122,51 @@ let ActivitiesService = ActivitiesService_1 = class ActivitiesService {
             take,
         });
         return activities.map((a) => this.hideAnswers(a));
+    }
+    async findGuestActivities(name, gradeGroup, grade) {
+        name = name.trim();
+        if (!name) {
+            throw new common_1.BadRequestException('Informe seu nome');
+        }
+        this.assertGuestGradeGroup(gradeGroup, grade);
+        const submissions = await this.prisma.submission.findMany({
+            where: {
+                guestName: name,
+                guestGradeGroup: gradeGroup,
+                guestGrade: grade,
+            },
+            select: { activityId: true },
+        });
+        const answeredIds = submissions.map((submission) => submission.activityId);
+        const studentProfile = {
+            educationLevel: client_1.EducationLevel.ENSINO_FUNDAMENTAL,
+            gradeGroup,
+            grade,
+            highSchoolYear: null,
+        };
+        const activities = await this.prisma.activity.findMany({
+            where: {
+                ...this.getStudentActivityFilter(studentProfile),
+                id: { notIn: answeredIds },
+            },
+            include: ACTIVITY_INCLUDE,
+            orderBy: { createdAt: 'desc' },
+        });
+        return activities.map((activity) => this.hideAnswers(activity));
+    }
+    async findOneForGuest(id, gradeGroup, grade) {
+        this.assertGuestGradeGroup(gradeGroup, grade);
+        const activity = await this.findOne(id);
+        if (activity.status !== 'PUBLISHED') {
+            throw new common_1.NotFoundException('Atividade não encontrada');
+        }
+        this.assertActivityMatchesStudent(activity, {
+            educationLevel: client_1.EducationLevel.ENSINO_FUNDAMENTAL,
+            gradeGroup,
+            grade,
+            highSchoolYear: null,
+        });
+        return this.hideAnswers(activity);
     }
     async findOneForUser(id, userId, userRole) {
         const activity = await this.findOne(id);
@@ -117,7 +179,56 @@ let ActivitiesService = ActivitiesService_1 = class ActivitiesService {
         if (activity.status !== 'PUBLISHED') {
             throw new common_1.NotFoundException('Atividade não encontrada');
         }
+        const student = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                educationLevel: true,
+                gradeGroup: true,
+                grade: true,
+                highSchoolYear: true,
+            },
+        });
+        if (!student ||
+            student.educationLevel === null ||
+            student.gradeGroup === null) {
+            throw new common_1.BadRequestException('O perfil do aluno não possui etapa e ano escolar');
+        }
+        this.assertActivityMatchesStudent(activity, {
+            educationLevel: student.educationLevel,
+            gradeGroup: student.gradeGroup,
+            grade: student.grade,
+            highSchoolYear: student.highSchoolYear,
+        });
         return this.hideAnswers(activity);
+    }
+    getStudentActivityFilter(student) {
+        const yearFilter = student.grade
+            ? { OR: [{ grade: student.grade }, { grade: null }] }
+            : {
+                OR: [
+                    { highSchoolYear: student.highSchoolYear },
+                    { highSchoolYear: null },
+                ],
+            };
+        return {
+            status: 'PUBLISHED',
+            educationLevel: student.educationLevel,
+            OR: [
+                { gradeGroup: null, ...yearFilter },
+                { gradeGroup: student.gradeGroup, ...yearFilter },
+            ],
+        };
+    }
+    assertActivityMatchesStudent(activity, student) {
+        const matchesEducation = activity.educationLevel === student.educationLevel;
+        const matchesGroup = activity.gradeGroup === null || activity.gradeGroup === student.gradeGroup;
+        const matchesYear = student.grade
+            ? activity.grade === null || activity.grade === student.grade
+            : activity.highSchoolYear === null ||
+                activity.highSchoolYear === student.highSchoolYear;
+        if (!matchesEducation || !matchesGroup || !matchesYear) {
+            throw new common_1.NotFoundException('Atividade não encontrada');
+        }
     }
     async findOne(id) {
         const activity = await this.prisma.activity.findUnique({
@@ -192,15 +303,92 @@ let ActivitiesService = ActivitiesService_1 = class ActivitiesService {
         if (activity.status !== 'PUBLISHED') {
             throw new common_1.BadRequestException('Atividade não está publicada');
         }
-        this.logger.log(`Aluno ${studentId} submetendo resposta para atividade ${activityId}`);
-        if (activity.type === client_1.ActivityType.MULTIPLE_CHOICE) {
-            return this.submitMultipleChoice(activity, studentId, dto.answers || []);
+        const student = await this.prisma.user.findUnique({
+            where: { id: studentId },
+            select: {
+                educationLevel: true,
+                gradeGroup: true,
+                grade: true,
+                highSchoolYear: true,
+            },
+        });
+        if (!student ||
+            student.educationLevel === null ||
+            student.gradeGroup === null) {
+            throw new common_1.BadRequestException('O perfil do aluno não possui etapa e ano escolar');
         }
-        else if (activity.type === client_1.ActivityType.WORD_SEARCH) {
-            return this.submitWordSearch(activity, studentId, dto.foundWords || []);
+        this.assertActivityMatchesStudent(activity, {
+            educationLevel: student.educationLevel,
+            gradeGroup: student.gradeGroup,
+            grade: student.grade,
+            highSchoolYear: student.highSchoolYear,
+        });
+        this.logger.log(`Aluno ${studentId} submetendo resposta para atividade ${activityId}`);
+        return this.submitAnswers(activity, dto, { studentId });
+    }
+    async submitGuest(activityId, dto) {
+        const name = dto.name.trim();
+        if (!name) {
+            throw new common_1.BadRequestException('Informe seu nome');
+        }
+        this.assertGuestGradeGroup(dto.gradeGroup, dto.grade);
+        const exists = await this.prisma.submission.findFirst({
+            where: {
+                activityId,
+                guestName: name,
+                guestGradeGroup: dto.gradeGroup,
+                guestGrade: dto.grade,
+            },
+        });
+        if (exists) {
+            throw new common_1.BadRequestException('Esta atividade já foi respondida com este nome e ano escolar.');
+        }
+        const activity = await this.findOne(activityId);
+        if (activity.status !== 'PUBLISHED') {
+            throw new common_1.BadRequestException('Atividade não está publicada');
+        }
+        this.assertActivityMatchesStudent(activity, {
+            educationLevel: client_1.EducationLevel.ENSINO_FUNDAMENTAL,
+            gradeGroup: dto.gradeGroup,
+            grade: dto.grade,
+            highSchoolYear: null,
+        });
+        this.logger.log(`Aluno convidado ${name} (${dto.grade}) submetendo atividade ${activityId}`);
+        return this.submitAnswers(activity, dto, {
+            guestName: name,
+            guestGradeGroup: dto.gradeGroup,
+            guestGrade: dto.grade,
+        });
+    }
+    assertGuestGradeGroup(gradeGroup, grade) {
+        if (gradeGroup === client_1.GradeGroup.ENSINO_MEDIO) {
+            throw new common_1.BadRequestException('Alunos sem login devem selecionar anos iniciais ou anos finais');
+        }
+        const initialGrades = [
+            client_1.Grade.PRIMEIRO_ANO,
+            client_1.Grade.SEGUNDO_ANO,
+            client_1.Grade.TERCEIRO_ANO,
+            client_1.Grade.QUARTO_ANO,
+            client_1.Grade.QUINTO_ANO,
+        ];
+        const belongsToGroup = gradeGroup === client_1.GradeGroup.ANOS_INICIAIS
+            ? initialGrades.includes(grade)
+            : gradeGroup === client_1.GradeGroup.ANOS_FINAIS &&
+                !initialGrades.includes(grade);
+        if (!belongsToGroup) {
+            throw new common_1.BadRequestException('O ano informado não corresponde aos anos iniciais ou finais selecionados');
         }
     }
-    async submitMultipleChoice(activity, studentId, answers) {
+    submitAnswers(activity, dto, identity) {
+        if (activity.type === client_1.ActivityType.MULTIPLE_CHOICE) {
+            return this.submitMultipleChoice(activity, identity, dto.answers || []);
+        }
+        else if (activity.type === client_1.ActivityType.WORD_SEARCH) {
+            return this.submitWordSearch(activity, identity, dto.foundWords || []);
+        }
+        throw new common_1.BadRequestException('Tipo de atividade não suportado');
+    }
+    async submitMultipleChoice(activity, identity, answers) {
         if (answers.length !== activity.questions.length) {
             throw new common_1.BadRequestException('Número de respostas inválido');
         }
@@ -213,13 +401,13 @@ let ActivitiesService = ActivitiesService_1 = class ActivitiesService {
         return await this.prisma.submission.create({
             data: {
                 activityId: activity.id,
-                studentId,
                 answers,
                 score,
+                ...identity,
             },
         });
     }
-    async submitWordSearch(activity, studentId, foundWords) {
+    async submitWordSearch(activity, identity, foundWords) {
         const wordSearch = activity.wordSearch;
         if (!wordSearch) {
             throw new common_1.BadRequestException('Atividade de caça palavras inválida');
@@ -234,9 +422,9 @@ let ActivitiesService = ActivitiesService_1 = class ActivitiesService {
         return await this.prisma.submission.create({
             data: {
                 activityId: activity.id,
-                studentId,
                 foundWords,
                 score: Math.round((score / maxScore) * 100),
+                ...identity,
             },
         });
     }
@@ -275,7 +463,14 @@ let ActivitiesService = ActivitiesService_1 = class ActivitiesService {
             },
             include: {
                 student: {
-                    select: { id: true, name: true, email: true },
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        gradeGroup: true,
+                        grade: true,
+                        highSchoolYear: true,
+                    },
                 },
                 activity: {
                     include: ACTIVITY_INCLUDE,

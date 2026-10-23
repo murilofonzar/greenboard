@@ -12,11 +12,16 @@ import EditActivity from "./pages/EditActivity";
 import CreateWordSearch from "./pages/CreateWordSearch";
 
 import { getAuth } from "./auth";
-import { setAuthToken } from "./api";
+import { clearAuthToken, setAuthToken } from "./api";
 
 export default function App() {
   const [page, setPage] = useState("home");
   const [logged, setLogged] = useState(false);
+  const [guestStudent, setGuestStudent] = useState<{
+    name: string;
+    gradeGroup: "ANOS_INICIAIS" | "ANOS_FINAIS";
+    grade: string;
+  } | null>(null);
 
   const [selectedActivity, setSelectedActivity] =
     useState<any>(null);
@@ -33,8 +38,10 @@ export default function App() {
 
   const logout = () => {
     localStorage.removeItem("auth");
+    clearAuthToken();
 
     setLogged(false);
+    setGuestStudent(null);
     setPage("home");
     setSelectedActivity(null);
   };
@@ -54,7 +61,12 @@ export default function App() {
       return (
         <Login
           onLogin={() => {
+            setGuestStudent(null);
             setLogged(true);
+            setPage("activities");
+          }}
+          onGuest={(student) => {
+            setGuestStudent(student);
             setPage("activities");
           }}
           goRegister={() => setPage("register")}
@@ -76,6 +88,7 @@ export default function App() {
       <Sidebar
         setPage={setPage}
         logout={logout}
+        guestStudent={guestStudent}
       />
 
       <div className="flex-1 overflow-auto">
@@ -84,6 +97,7 @@ export default function App() {
           <Activities
             setPage={setPage}
             setSelectedActivity={setSelectedActivity}
+            guestStudent={guestStudent}
           />
         )}
 

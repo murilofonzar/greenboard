@@ -22,11 +22,20 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ActivitiesService } from './activities.service';
-import { CreateActivityDTO, UpdateActivityDTO } from './dto/create-activity.dto';
-import { SubmitActivityDTO, CorrectSubmissionDTO } from './dto/submit-activity.dto';
+import {
+  CreateActivityDTO,
+  UpdateActivityDTO,
+} from './dto/create-activity.dto';
+import {
+  GuestActivityQueryDTO,
+  GuestSubmitActivityDTO,
+  SubmitActivityDTO,
+  CorrectSubmissionDTO,
+} from './dto/submit-activity.dto';
 import { PaginationQueryDTO } from '../common/dto/pagination-query.dto';
 import { Roles } from '../auth/roles.decorator';
 import { ActivityOwnerGuard } from '../auth/guards/activity-owner.guard';
+import { Public } from '../auth/public.decorator';
 
 @ApiTags('Activities')
 @ApiBearerAuth()
@@ -60,6 +69,21 @@ export class ActivitiesController {
     return this.service.findAll(req.user.sub, req.user.role, query.skip, query.take);
   }
 
+  @Public()
+  @Get('guest')
+  @ApiOperation({
+    summary: 'Listar atividades públicas para alunos sem conta',
+    description:
+      'Informe nome, etapa e ano escolar para listar atividades compatíveis ainda não respondidas.',
+  })
+  findGuestActivities(@Query() query: GuestActivityQueryDTO) {
+    return this.service.findGuestActivities(
+      query.name,
+      query.gradeGroup,
+      query.grade,
+    );
+  }
+
   @Get('results/student')
   @Roles('ALUNO')
   @ApiOperation({ summary: 'Obter resultados do aluno' })
@@ -83,6 +107,17 @@ export class ActivitiesController {
   @ApiResponse({ status: 404, description: 'Atividade não encontrada' })
   getOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
     return this.service.findOneForUser(id, req.user.sub, req.user.role);
+  }
+
+  @Public()
+  @Get('guest/:id')
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOperation({ summary: 'Obter atividade publicada compatível sem login' })
+  getOneForGuest(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: GuestActivityQueryDTO,
+  ) {
+    return this.service.findOneForGuest(id, query.gradeGroup, query.grade);
   }
 
   @Put(':id')
@@ -134,6 +169,22 @@ export class ActivitiesController {
     @Req() req: any,
   ) {
     return this.service.submit(id, req.user.sub, dto);
+  }
+
+  @Public()
+  @Post(':id/guest-submit')
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOperation({ summary: 'Submeter atividade sem login usando nome, etapa e ano escolar' })
+  @ApiResponse({ status: 201, description: 'Respostas submetidas' })
+  @ApiResponse({
+    status: 400,
+    description: 'Identificação inválida ou atividade já respondida',
+  })
+  submitGuest(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: GuestSubmitActivityDTO,
+  ) {
+    return this.service.submitGuest(id, dto);
   }
 
   @Post('submission/:id/correct')

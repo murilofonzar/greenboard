@@ -7,6 +7,7 @@ import { getAuth } from "../auth";
 export default function Activities({
   setPage,
   setSelectedActivity,
+  guestStudent,
 }: any) {
   const auth = getAuth();
 
@@ -20,19 +21,22 @@ export default function Activities({
     useState<any>(null);
 
   const loadActivities = async () => {
-    const res = await api.get("/activities");
+    const res = guestStudent
+      ? await api.get("/activities/guest", { params: guestStudent })
+      : await api.get("/activities");
     setActivities(res.data);
   };
 
-    useEffect(() => {
+  useEffect(() => {
     loadActivities();
-  }, []);
+  }, [guestStudent?.name, guestStudent?.gradeGroup, guestStudent?.grade]);
 
   // Apenas alunos podem abrir a tela de resposta
   if (selected && !isProfessor) {
     return (
       <SolveActivity
         activity={selected}
+        guestStudent={guestStudent}
         onBack={() => {
           setSelected(null);
           loadActivities();

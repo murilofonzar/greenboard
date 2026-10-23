@@ -63,6 +63,10 @@ export const setAuthToken = (token: string) => {
   api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 };
 
+export const clearAuthToken = () => {
+  delete api.defaults.headers.common["Authorization"];
+};
+
 // Arquivos enviados ao backend vêm como caminho relativo (/uploads/...)
 export const mediaUrl = (url?: string | null) => {
   if (!url) return "";

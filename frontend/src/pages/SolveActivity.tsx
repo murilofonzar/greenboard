@@ -1,9 +1,26 @@
 import { useState } from "react";
 import { api, getErrorMessage } from "../api";
 import { MediaGallery, MediaView } from "../components/Media";
+import WordSearch from "../components/WordSearch";
+import { ActivityType } from "../types";
 
-export default function SolveActivity({ activity }: any) {
+interface SolveActivityProps {
+  activity: any;
+  guestStudent?: {
+    name: string;
+    gradeGroup: "ANOS_INICIAIS" | "ANOS_FINAIS";
+    grade: string;
+  } | null;
+  onBack?: () => void;
+}
+
+export default function SolveActivity({
+  activity,
+  guestStudent,
+  onBack,
+}: SolveActivityProps) {
   const [answers, setAnswers] = useState<number[]>([]);
+  const [foundWords, setFoundWords] = useState<string[]>([]);
   const [finished, setFinished] = useState(false);
 
   const select = (
@@ -15,22 +32,24 @@ export default function SolveActivity({ activity }: any) {
     setAnswers(updated);
   };
 
-  const submit = async () => {
-    const answeredAll = activity.questions.every(
-      (_: any, i: number) => answers[i] !== undefined
-    );
-
-    if (!answeredAll) {
+  const submit = async (words = foundWords) => {
+    if (
+      activity.type === ActivityType.MULTIPLE_CHOICE &&
+      activity.questions.some((_question: any, i: number) => answers[i] === undefined)
+    ) {
       alert("Responda todas as questões");
       return;
     }
 
     try {
+      const response = activity.type === ActivityType.WORD_SEARCH
+        ? { foundWords: words }
+        : { answers };
       await api.post(
-        `/activities/${activity.id}/submit`,
-        {
-          answers,
-        }
+        guestStudent
+          ? `/activities/${activity.id}/guest-submit`
+          : `/activities/${activity.id}/submit`,
+        guestStudent ? { ...response, ...guestStudent } : response,
       );
     } catch (error) {
       alert(getErrorMessage(error, "Erro ao enviar atividade"));
@@ -47,6 +66,14 @@ export default function SolveActivity({ activity }: any) {
         <h1 className="text-3xl">
           Atividade enviada com sucesso!
         </h1>
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="mt-6 bg-green-600 hover:bg-green-500 px-6 py-3 rounded-2xl"
+          >
+            Voltar às atividades
+          </button>
+        )}
       </div>
     );
   }
@@ -64,65 +91,78 @@ export default function SolveActivity({ activity }: any) {
 
         <MediaGallery media={activity.media} />
 
-        <div className="space-y-8">
-          {activity.questions.map(
-            (q: any, i: number) => (
-              <div
-                key={i}
-                className="bg-white/10 rounded-2xl p-6"
-              >
-                <h2 className="text-xl mb-4">
-                  {i + 1}. {q.statement}
-                </h2>
+        {activity.type === ActivityType.WORD_SEARCH ? (
+          <WordSearch
+            grid={activity.wordSearch?.grid ?? []}
+            words={activity.wordSearch?.words ?? []}
+            onSubmit={(words) => {
+              setFoundWords(words);
+              void submit(words);
+            }}
+          />
+        ) : (
+          <>
+            <div className="space-y-8">
+              {activity.questions.map(
+                (q: any, i: number) => (
+                  <div
+                    key={i}
+                    className="bg-white/10 rounded-2xl p-6"
+                  >
+                    <h2 className="text-xl mb-4">
+                      {i + 1}. {q.statement}
+                    </h2>
 
-                {(q.imageUrl || q.audioUrl) && (
-                  <div className="space-y-3 mb-4">
-                    {q.imageUrl && (
-                      <MediaView type="IMAGE" url={q.imageUrl} />
+                    {(q.imageUrl || q.audioUrl) && (
+                      <div className="space-y-3 mb-4">
+                        {q.imageUrl && (
+                          <MediaView type="IMAGE" url={q.imageUrl} />
+                        )}
+                        {q.audioUrl && (
+                          <MediaView type="AUDIO" url={q.audioUrl} />
+                        )}
+                      </div>
                     )}
-                    {q.audioUrl && (
-                      <MediaView type="AUDIO" url={q.audioUrl} />
-                    )}
+
+                    <div className="space-y-3">
+                      {q.options.map(
+                        (
+                          opt: string,
+                          j: number
+                        ) => (
+                          <label
+                            key={j}
+                            className="flex items-center gap-3 bg-black/20 p-3 rounded-xl cursor-pointer hover:bg-black/40 transition"
+                          >
+                            <input
+                              type="radio"
+                              name={`question-${i}`}
+                              checked={
+                                answers[i] === j
+                              }
+                              onChange={() =>
+                                select(i, j)
+                              }
+                            />
+
+                            <span>{opt}</span>
+                          </label>
+                        )
+                      )}
+                    </div>
                   </div>
-                )}
+                )
+              )}
+            </div>
 
-                <div className="space-y-3">
-                  {q.options.map(
-                    (
-                      opt: string,
-                      j: number
-                    ) => (
-                      <label
-                        key={j}
-                        className="flex items-center gap-3 bg-black/20 p-3 rounded-xl cursor-pointer hover:bg-black/40 transition"
-                      >
-                        <input
-                          type="radio"
-                          name={`question-${i}`}
-                          checked={
-                            answers[i] === j
-                          }
-                          onChange={() =>
-                            select(i, j)
-                          }
-                        />
-
-                        <span>{opt}</span>
-                      </label>
-                    )
-                  )}
-                </div>
-              </div>
-            )
-          )}
-        </div>
-
-        <button
-          onClick={submit}
-          className="mt-8 bg-green-600 hover:bg-green-500 px-6 py-3 rounded-2xl"
-        >
-          Enviar atividade
-        </button>
+            <button
+              onClick={() => void submit()}
+              className="mt-8 bg-green-600 hover:bg-green-500 px-6 py-3 rounded-2xl"
+            >
+              Enviar atividade
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

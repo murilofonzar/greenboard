@@ -9,9 +9,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CorrectSubmissionDTO = exports.SubmitActivityDTO = void 0;
+exports.CorrectSubmissionDTO = exports.GuestActivityQueryDTO = exports.GuestSubmitActivityDTO = exports.SubmitActivityDTO = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const client_1 = require("@prisma/client");
 class SubmitActivityDTO {
     answers;
     foundWords;
@@ -40,6 +41,35 @@ __decorate([
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
 ], SubmitActivityDTO.prototype, "foundWords", void 0);
+class GuestSubmitActivityDTO extends SubmitActivityDTO {
+    name;
+    gradeGroup;
+    grade;
+}
+exports.GuestSubmitActivityDTO = GuestSubmitActivityDTO;
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Ana Silva' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", String)
+], GuestSubmitActivityDTO.prototype, "name", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ enum: client_1.GradeGroup, example: client_1.GradeGroup.ANOS_INICIAIS }),
+    (0, class_validator_1.IsEnum)(client_1.GradeGroup),
+    __metadata("design:type", String)
+], GuestSubmitActivityDTO.prototype, "gradeGroup", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ enum: client_1.Grade, example: client_1.Grade.PRIMEIRO_ANO }),
+    (0, class_validator_1.IsEnum)(client_1.Grade),
+    __metadata("design:type", String)
+], GuestSubmitActivityDTO.prototype, "grade", void 0);
+class GuestActivityQueryDTO extends (0, swagger_1.OmitType)(GuestSubmitActivityDTO, [
+    'answers',
+    'foundWords',
+]) {
+}
+exports.GuestActivityQueryDTO = GuestActivityQueryDTO;
 class CorrectSubmissionDTO {
     score;
     feedback;

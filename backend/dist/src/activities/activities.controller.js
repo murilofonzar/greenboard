@@ -21,6 +21,7 @@ const submit_activity_dto_1 = require("./dto/submit-activity.dto");
 const pagination_query_dto_1 = require("../common/dto/pagination-query.dto");
 const roles_decorator_1 = require("../auth/roles.decorator");
 const activity_owner_guard_1 = require("../auth/guards/activity-owner.guard");
+const public_decorator_1 = require("../auth/public.decorator");
 let ActivitiesController = class ActivitiesController {
     service;
     constructor(service) {
@@ -32,6 +33,9 @@ let ActivitiesController = class ActivitiesController {
     findAll(req, query) {
         return this.service.findAll(req.user.sub, req.user.role, query.skip, query.take);
     }
+    findGuestActivities(query) {
+        return this.service.findGuestActivities(query.name, query.gradeGroup, query.grade);
+    }
     studentResults(req, query) {
         return this.service.getStudentResults(req.user.sub, query.skip, query.take);
     }
@@ -40,6 +44,9 @@ let ActivitiesController = class ActivitiesController {
     }
     getOne(id, req) {
         return this.service.findOneForUser(id, req.user.sub, req.user.role);
+    }
+    getOneForGuest(id, query) {
+        return this.service.findOneForGuest(id, query.gradeGroup, query.grade);
     }
     update(id, dto, req) {
         return this.service.update(id, req.user.sub, dto);
@@ -52,6 +59,9 @@ let ActivitiesController = class ActivitiesController {
     }
     submit(id, dto, req) {
         return this.service.submit(id, req.user.sub, dto);
+    }
+    submitGuest(id, dto) {
+        return this.service.submitGuest(id, dto);
     }
     correct(id, body, req) {
         return this.service.correctSubmission(id, req.user.sub, body);
@@ -88,6 +98,18 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ActivitiesController.prototype, "findAll", null);
 __decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Get)('guest'),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Listar atividades públicas para alunos sem conta',
+        description: 'Informe nome, etapa e ano escolar para listar atividades compatíveis ainda não respondidas.',
+    }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [submit_activity_dto_1.GuestActivityQueryDTO]),
+    __metadata("design:returntype", void 0)
+], ActivitiesController.prototype, "findGuestActivities", null);
+__decorate([
     (0, common_1.Get)('results/student'),
     (0, roles_decorator_1.Roles)('ALUNO'),
     (0, swagger_1.ApiOperation)({ summary: 'Obter resultados do aluno' }),
@@ -121,6 +143,17 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], ActivitiesController.prototype, "getOne", null);
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Get)('guest/:id'),
+    (0, swagger_1.ApiParam)({ name: 'id', format: 'uuid' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Obter atividade publicada compatível sem login' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, submit_activity_dto_1.GuestActivityQueryDTO]),
+    __metadata("design:returntype", void 0)
+], ActivitiesController.prototype, "getOneForGuest", null);
 __decorate([
     (0, common_1.Put)(':id'),
     (0, roles_decorator_1.Roles)('PROFESSOR'),
@@ -178,6 +211,22 @@ __decorate([
     __metadata("design:paramtypes", [String, submit_activity_dto_1.SubmitActivityDTO, Object]),
     __metadata("design:returntype", void 0)
 ], ActivitiesController.prototype, "submit", null);
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Post)(':id/guest-submit'),
+    (0, swagger_1.ApiParam)({ name: 'id', format: 'uuid' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Submeter atividade sem login usando nome, etapa e ano escolar' }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'Respostas submetidas' }),
+    (0, swagger_1.ApiResponse)({
+        status: 400,
+        description: 'Identificação inválida ou atividade já respondida',
+    }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, submit_activity_dto_1.GuestSubmitActivityDTO]),
+    __metadata("design:returntype", void 0)
+], ActivitiesController.prototype, "submitGuest", null);
 __decorate([
     (0, common_1.Post)('submission/:id/correct'),
     (0, roles_decorator_1.Roles)('PROFESSOR'),

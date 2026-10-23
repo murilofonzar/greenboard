@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getErrorMessage, mediaUrl, uploadMedia } from "../api";
 import type { ActivityMedia, MediaType, MediaUploadResponse } from "../types";
 
@@ -62,6 +62,125 @@ export function MediaUploadButton({
         className={`${className} px-4 py-2 rounded-xl disabled:opacity-50`}
       >
         {uploading ? "Enviando..." : label}
+      </button>
+      {error && <span className="text-red-300 text-sm mt-1">{error}</span>}
+    </div>
+  );
+}
+
+interface AudioRecorderButtonProps {
+  onUploaded: (media: MediaUploadResponse) => void;
+  className?: string;
+}
+
+function AudioRecorderButton({
+  onUploaded,
+  className = "bg-red-700 hover:bg-red-600",
+}: AudioRecorderButtonProps) {
+  const [recording, setRecording] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => () => {
+    const recorder = recorderRef.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      recorder.stop();
+    }
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+  }, []);
+
+  const releaseMicrophone = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  };
+
+  const startRecording = async () => {
+    setError(null);
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setError("Este navegador não oferece suporte à gravação de áudio.");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      chunksRef.current = [];
+
+      const supportedMimeType = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+      ].find((mimeType) => MediaRecorder.isTypeSupported(mimeType));
+      const recorder = new MediaRecorder(
+        stream,
+        supportedMimeType ? { mimeType: supportedMimeType } : undefined,
+      );
+      recorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = async () => {
+        setRecording(false);
+        releaseMicrophone();
+
+        const recordedMimeType =
+          recorder.mimeType || chunksRef.current[0]?.type || "audio/webm";
+        const mimeType = recordedMimeType.startsWith("audio/mp4")
+          ? "audio/mp4"
+          : "audio/webm";
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        if (blob.size > MAX_SIZE_MB * 1024 * 1024) {
+          setError(`Gravação maior que ${MAX_SIZE_MB} MB`);
+          return;
+        }
+
+        const extension = mimeType.includes("mp4") ? "m4a" : "webm";
+        const file = new File([blob], `gravacao-${Date.now()}.${extension}`, {
+          type: mimeType,
+        });
+        try {
+          setUploading(true);
+          onUploaded(await uploadMedia(file));
+        } catch (err) {
+          setError(getErrorMessage(err, "Erro ao enviar gravação"));
+        } finally {
+          setUploading(false);
+        }
+      };
+
+      recorder.start();
+      setRecording(true);
+    } catch (err) {
+      releaseMicrophone();
+      setError(
+        err instanceof DOMException && err.name === "NotAllowedError"
+          ? "Permita o acesso ao microfone para gravar."
+          : "Não foi possível iniciar a gravação.",
+      );
+    }
+  };
+
+  return (
+    <div className="inline-flex flex-col">
+      <button
+        type="button"
+        disabled={uploading}
+        onClick={() => {
+          if (recording) recorderRef.current?.stop();
+          else void startRecording();
+        }}
+        className={`${className} px-4 py-2 rounded-xl disabled:opacity-50`}
+      >
+        {uploading
+          ? "Enviando gravação..."
+          : recording
+            ? "Parar e enviar gravação"
+            : "Gravar áudio"}
       </button>
       {error && <span className="text-red-300 text-sm mt-1">{error}</span>}
     </div>
@@ -160,6 +279,10 @@ export function ActivityMediaEditor({ value, onChange }: ActivityMediaEditorProp
       <div className="flex flex-wrap gap-3">
         <MediaUploadButton type="IMAGE" label="+ Adicionar imagem" onUploaded={add} />
         <MediaUploadButton type="AUDIO" label="+ Adicionar áudio" onUploaded={add} />
+        <AudioRecorderButton
+          onUploaded={add}
+          className="bg-red-700 hover:bg-red-600"
+        />
       </div>
     </div>
   );
@@ -212,6 +335,10 @@ export function QuestionMediaEditor({ imageUrl, audioUrl, onChange }: QuestionMe
           label={audioUrl ? "Trocar áudio" : "+ Áudio na questão"}
           className="bg-indigo-700 hover:bg-indigo-600"
           onUploaded={(m) => onChange("audioUrl", m.url)}
+        />
+        <AudioRecorderButton
+          onUploaded={(m) => onChange("audioUrl", m.url)}
+          className="bg-red-700 hover:bg-red-600"
         />
       </div>
     </div>

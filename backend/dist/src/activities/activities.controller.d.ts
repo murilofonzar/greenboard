@@ -1,6 +1,6 @@
 import { ActivitiesService } from './activities.service';
 import { CreateActivityDTO, UpdateActivityDTO } from './dto/create-activity.dto';
-import { SubmitActivityDTO, CorrectSubmissionDTO } from './dto/submit-activity.dto';
+import { GuestActivityQueryDTO, GuestSubmitActivityDTO, SubmitActivityDTO, CorrectSubmissionDTO } from './dto/submit-activity.dto';
 import { PaginationQueryDTO } from '../common/dto/pagination-query.dto';
 export declare class ActivitiesController {
     private readonly service;
@@ -89,6 +89,47 @@ export declare class ActivitiesController {
         updatedAt: Date;
         professorId: string;
     }[]>;
+    findGuestActivities(query: GuestActivityQueryDTO): Promise<{
+        questions: {
+            id: string;
+            statement: string;
+            options: string[];
+            imageUrl: string | null;
+            audioUrl: string | null;
+            activityId: string;
+        }[];
+        wordSearch: {
+            id: string;
+            createdAt: Date;
+            grid: string[];
+            words: string[];
+            orientation: string[];
+            positions: string[];
+            activityId: string;
+        } | null;
+        media: {
+            id: string;
+            createdAt: Date;
+            type: import(".prisma/client").$Enums.MediaType;
+            activityId: string;
+            url: string;
+            caption: string | null;
+            mimeType: string | null;
+            order: number;
+        }[];
+        id: string;
+        educationLevel: import(".prisma/client").$Enums.EducationLevel;
+        gradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
+        grade: import(".prisma/client").$Enums.Grade | null;
+        highSchoolYear: import(".prisma/client").$Enums.HighSchoolGrade | null;
+        createdAt: Date;
+        title: string;
+        description: string;
+        type: import(".prisma/client").$Enums.ActivityType;
+        status: import(".prisma/client").$Enums.ActivityStatus;
+        updatedAt: Date;
+        professorId: string;
+    }[]>;
     studentResults(req: any, query: PaginationQueryDTO): Promise<({
         activity: {
             id: string;
@@ -108,12 +149,16 @@ export declare class ActivitiesController {
         id: string;
         createdAt: Date;
         status: import(".prisma/client").$Enums.SubmissionStatus;
+        guestName: string | null;
+        guestClass: string | null;
+        guestGradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
+        guestGrade: import(".prisma/client").$Enums.Grade | null;
         answers: number[];
         foundWords: string[];
         score: number | null;
         feedback: string | null;
         correctedAt: Date | null;
-        studentId: string;
+        studentId: string | null;
         activityId: string;
     })[]>;
     professorResults(req: any, query: PaginationQueryDTO): Promise<({
@@ -164,20 +209,68 @@ export declare class ActivitiesController {
             name: string;
             id: string;
             email: string;
-        };
+            gradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
+            grade: import(".prisma/client").$Enums.Grade | null;
+            highSchoolYear: import(".prisma/client").$Enums.HighSchoolGrade | null;
+        } | null;
     } & {
         id: string;
         createdAt: Date;
         status: import(".prisma/client").$Enums.SubmissionStatus;
+        guestName: string | null;
+        guestClass: string | null;
+        guestGradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
+        guestGrade: import(".prisma/client").$Enums.Grade | null;
         answers: number[];
         foundWords: string[];
         score: number | null;
         feedback: string | null;
         correctedAt: Date | null;
-        studentId: string;
+        studentId: string | null;
         activityId: string;
     })[]>;
     getOne(id: string, req: any): Promise<{
+        questions: {
+            id: string;
+            statement: string;
+            options: string[];
+            imageUrl: string | null;
+            audioUrl: string | null;
+            activityId: string;
+        }[];
+        wordSearch: {
+            id: string;
+            createdAt: Date;
+            grid: string[];
+            words: string[];
+            orientation: string[];
+            positions: string[];
+            activityId: string;
+        } | null;
+        media: {
+            id: string;
+            createdAt: Date;
+            type: import(".prisma/client").$Enums.MediaType;
+            activityId: string;
+            url: string;
+            caption: string | null;
+            mimeType: string | null;
+            order: number;
+        }[];
+        id: string;
+        educationLevel: import(".prisma/client").$Enums.EducationLevel;
+        gradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
+        grade: import(".prisma/client").$Enums.Grade | null;
+        highSchoolYear: import(".prisma/client").$Enums.HighSchoolGrade | null;
+        createdAt: Date;
+        title: string;
+        description: string;
+        type: import(".prisma/client").$Enums.ActivityType;
+        status: import(".prisma/client").$Enums.ActivityStatus;
+        updatedAt: Date;
+        professorId: string;
+    }>;
+    getOneForGuest(id: string, query: GuestActivityQueryDTO): Promise<{
         questions: {
             id: string;
             statement: string;
@@ -293,24 +386,48 @@ export declare class ActivitiesController {
         id: string;
         createdAt: Date;
         status: import(".prisma/client").$Enums.SubmissionStatus;
+        guestName: string | null;
+        guestClass: string | null;
+        guestGradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
+        guestGrade: import(".prisma/client").$Enums.Grade | null;
         answers: number[];
         foundWords: string[];
         score: number | null;
         feedback: string | null;
         correctedAt: Date | null;
-        studentId: string;
+        studentId: string | null;
         activityId: string;
-    } | undefined>;
+    }>;
+    submitGuest(id: string, dto: GuestSubmitActivityDTO): Promise<{
+        id: string;
+        createdAt: Date;
+        status: import(".prisma/client").$Enums.SubmissionStatus;
+        guestName: string | null;
+        guestClass: string | null;
+        guestGradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
+        guestGrade: import(".prisma/client").$Enums.Grade | null;
+        answers: number[];
+        foundWords: string[];
+        score: number | null;
+        feedback: string | null;
+        correctedAt: Date | null;
+        studentId: string | null;
+        activityId: string;
+    }>;
     correct(id: string, body: CorrectSubmissionDTO, req: any): Promise<{
         id: string;
         createdAt: Date;
         status: import(".prisma/client").$Enums.SubmissionStatus;
+        guestName: string | null;
+        guestClass: string | null;
+        guestGradeGroup: import(".prisma/client").$Enums.GradeGroup | null;
+        guestGrade: import(".prisma/client").$Enums.Grade | null;
         answers: number[];
         foundWords: string[];
         score: number | null;
         feedback: string | null;
         correctedAt: Date | null;
-        studentId: string;
+        studentId: string | null;
         activityId: string;
     }>;
 }

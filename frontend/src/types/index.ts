@@ -110,7 +110,9 @@ export interface Activity {
 
 export interface Submission {
   id: string;
-  studentId: string;
+  studentId?: string | null;
+  guestName?: string | null;
+  guestClass?: string | null;
   activityId: string;
   answers?: number[];
   foundWords?: string[];

@@ -152,8 +152,12 @@ enum SubmissionStatus {
 model Submission {
   id String @id @default(uuid())
 
-  studentId String
-  student   User   @relation(fields: [studentId], references: [id])
+  studentId  String?
+  student    User?   @relation(fields: [studentId], references: [id])
+  guestName  String?
+  guestClass String?
+  guestGradeGroup GradeGroup?
+  guestGrade Grade?
 
   activityId String
   activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
